@@ -1,0 +1,298 @@
+:root {
+  font-family: "Segoe UI", sans-serif;
+  color: #f4f4f4;
+  background-color: #0b2e13;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at center, #145a32, #0b2e13 70%);
+}
+
+.app-header {
+  text-align: center;
+  padding: 1.5rem 1rem 0.5rem;
+  color: #fefefe;
+}
+
+.app-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.1rem;
+}
+
+.app-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  gap: 1.5rem;
+  padding: 0 1.5rem 2rem;
+  box-sizing: border-box;
+}
+
+.bankroll-panel,
+.results-panel,
+.table-panel {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.bankroll-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bankroll-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+}
+
+.chip-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  background: #f7c600;
+  color: #2c1608;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chip:focus,
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4);
+}
+
+.chip.active {
+  background: #ffec6e;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5);
+}
+
+.primary,
+.secondary {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.primary {
+  background: #2ecc71;
+  color: #073519;
+}
+
+.primary:disabled {
+  background: #1a5d34;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+
+.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fefefe;
+}
+
+.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.table {
+  background: rgba(9, 66, 28, 0.9);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bet-group h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  color: #fceabb;
+}
+
+.bet-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.bet-grid.two-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bet-grid.four-cols {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bet-grid.six-cols {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bet-grid.single-col {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bet-spot {
+  position: relative;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 1rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 120px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.bet-spot button {
+  background: none;
+  border: none;
+  color: #fefefe;
+  font-size: 1.05rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.bet-spot span {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.bet-amount {
+  margin-top: auto;
+  font-weight: bold;
+  min-height: 1.4rem;
+}
+
+.bet-spot .clear-spot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  display: none;
+  cursor: pointer;
+}
+
+.bet-spot.has-bet .clear-spot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.results-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cards-display h2,
+.log-panel h2 {
+  margin: 0 0 0.5rem;
+  color: #fceabb;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+
+.card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(200, 200, 200, 0.8));
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  color: #222;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.card .index {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-weight: bold;
+}
+
+.card .rank {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.card.red {
+  color: #b22222;
+}
+
+.card.black {
+  color: #222;
+}
+
+.card .suit {
+  font-size: 1.4rem;
+}
+
+.dice-result {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.log-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.log-panel li {
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bankroll-panel,
+  .table-panel,
+  .results-panel {
+    width: 100%;
+  }
+
+  .table {
+    padding: 1rem;
+  }
+}
