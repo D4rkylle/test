@@ -31,6 +31,57 @@
           <button class="chip" data-value="500">500</button>
           <button class="chip" data-value="1000">1000</button>
         </div>
+        <section class="stats-panel" aria-live="polite">
+          <h2>Statisztikák</h2>
+          <div class="stats-grid">
+            <div class="stats-block">
+              <h3>Összes kör</h3>
+              <p id="stats-rounds">0</p>
+            </div>
+            <div class="stats-block">
+              <h3>Leggyakoribb szín</h3>
+              <p id="stats-top-color">-</p>
+            </div>
+            <div class="stats-block">
+              <h3>Leggyakoribb szimbólum</h3>
+              <p id="stats-top-suit">-</p>
+            </div>
+            <div class="stats-block">
+              <h3>Leggyakoribb rang</h3>
+              <p id="stats-top-rank">-</p>
+            </div>
+          </div>
+          <div class="stats-section">
+            <h3>Színeloszlás</h3>
+            <ul>
+              <li>Piros: <span id="stats-color-red">0 (0%)</span></li>
+              <li>Fekete: <span id="stats-color-black">0 (0%)</span></li>
+              <li>Joker: <span id="stats-color-joker">0 (0%)</span></li>
+            </ul>
+          </div>
+          <div class="stats-section">
+            <h3>Szimbólumok</h3>
+            <ul class="suits-list">
+              <li>♥ Hearts: <span id="stats-suit-hearts">0 (0%)</span></li>
+              <li>♦ Diamonds: <span id="stats-suit-diamonds">0 (0%)</span></li>
+              <li>♣ Clubs: <span id="stats-suit-clubs">0 (0%)</span></li>
+              <li>♠ Spades: <span id="stats-suit-spades">0 (0%)</span></li>
+              <li>★ Joker: <span id="stats-suit-joker">0 (0%)</span></li>
+            </ul>
+          </div>
+          <div class="stats-section">
+            <h3>Kártyatípus</h3>
+            <ul>
+              <li>Szám (2-10): <span id="stats-type-number">0 (0%)</span></li>
+              <li>Figura (J-A): <span id="stats-type-face">0 (0%)</span></li>
+              <li>Joker: <span id="stats-type-joker">0 (0%)</span></li>
+            </ul>
+          </div>
+          <div class="stats-section">
+            <h3>Rangok</h3>
+            <div id="stats-ranks" class="stats-ranks"></div>
+          </div>
+        </section>
         <button id="clear-all" class="secondary">Összes tét törlése</button>
         <button id="deal-button" class="primary">Osztás</button>
       </section>

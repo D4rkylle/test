@@ -29,6 +29,30 @@ let selectedChip = null;
 let currentBets = new Map();
 let roundLocked = false;
 
+const stats = {
+  rounds: 0,
+  colors: { red: 0, black: 0, joker: 0 },
+  suits: { hearts: 0, diamonds: 0, clubs: 0, spades: 0, joker: 0 },
+  types: { number: 0, face: 0, joker: 0 },
+  ranks: RANKS.concat(["Joker"]).reduce((acc, rank) => {
+    acc[rank] = 0;
+    return acc;
+  }, {}),
+};
+
+const RANKS_WITH_JOKER = RANKS.concat(["Joker"]);
+const RANK_LABELS = RANKS_WITH_JOKER.reduce((acc, rank) => {
+  acc[rank] = rank;
+  return acc;
+}, {});
+const SUIT_LABELS = {
+  hearts: "♥ Hearts",
+  diamonds: "♦ Diamonds",
+  clubs: "♣ Clubs",
+  spades: "♠ Spades",
+  joker: "★ Joker",
+};
+
 const bankrollDisplay = document.getElementById("bankroll-display");
 const betTotalDisplay = document.getElementById("bet-total-display");
 const logList = document.getElementById("log");
@@ -38,6 +62,22 @@ const dealButton = document.getElementById("deal-button");
 const clearAllButton = document.getElementById("clear-all");
 const chipButtons = Array.from(document.querySelectorAll(".chip"));
 const betSpots = Array.from(document.querySelectorAll(".bet-spot"));
+const statsRoundsEl = document.getElementById("stats-rounds");
+const statsTopColorEl = document.getElementById("stats-top-color");
+const statsTopSuitEl = document.getElementById("stats-top-suit");
+const statsTopRankEl = document.getElementById("stats-top-rank");
+const statsColorRedEl = document.getElementById("stats-color-red");
+const statsColorBlackEl = document.getElementById("stats-color-black");
+const statsColorJokerEl = document.getElementById("stats-color-joker");
+const statsSuitHeartsEl = document.getElementById("stats-suit-hearts");
+const statsSuitDiamondsEl = document.getElementById("stats-suit-diamonds");
+const statsSuitClubsEl = document.getElementById("stats-suit-clubs");
+const statsSuitSpadesEl = document.getElementById("stats-suit-spades");
+const statsSuitJokerEl = document.getElementById("stats-suit-joker");
+const statsTypeNumberEl = document.getElementById("stats-type-number");
+const statsTypeFaceEl = document.getElementById("stats-type-face");
+const statsTypeJokerEl = document.getElementById("stats-type-joker");
+const statsRanksEl = document.getElementById("stats-ranks");
 
 function roundCurrency(value) {
   return Math.round(value * 100) / 100;
@@ -231,6 +271,7 @@ function startRound() {
   const winningIndex = dieResult - 1;
   const winningCard = cards[winningIndex];
   addLog(`Nyerő lap: #${dieResult} – ${describeCard(winningCard)}.`);
+  recordWinningCard(winningCard);
   const pokerResults = evaluatePokerCombinations(cards);
 
   let winnings = 0;
@@ -470,6 +511,101 @@ function resolveBet(betType, betKey, amount, cards, winningIndex, pokerResults) 
   return { type: "loss" };
 }
 
+function formatCountWithPercent(count) {
+  const percent = stats.rounds ? (count / stats.rounds) * 100 : 0;
+  return `${count} (${percent.toFixed(1)}%)`;
+}
+
+function determineLeader(counts, labels) {
+  let max = 0;
+  Object.values(counts).forEach((value) => {
+    if (value > max) max = value;
+  });
+  if (max === 0) {
+    return "-";
+  }
+  const leaders = Object.entries(counts)
+    .filter(([, value]) => value === max)
+    .map(([key]) => labels[key] ?? key);
+  return leaders.length === 1 ? leaders[0] : `Megosztott (${leaders.join(", ")})`;
+}
+
+function updateStatsDisplay() {
+  statsRoundsEl.textContent = stats.rounds.toString();
+  statsColorRedEl.textContent = formatCountWithPercent(stats.colors.red);
+  statsColorBlackEl.textContent = formatCountWithPercent(stats.colors.black);
+  statsColorJokerEl.textContent = formatCountWithPercent(stats.colors.joker);
+  statsSuitHeartsEl.textContent = formatCountWithPercent(stats.suits.hearts);
+  statsSuitDiamondsEl.textContent = formatCountWithPercent(stats.suits.diamonds);
+  statsSuitClubsEl.textContent = formatCountWithPercent(stats.suits.clubs);
+  statsSuitSpadesEl.textContent = formatCountWithPercent(stats.suits.spades);
+  statsSuitJokerEl.textContent = formatCountWithPercent(stats.suits.joker);
+  statsTypeNumberEl.textContent = formatCountWithPercent(stats.types.number);
+  statsTypeFaceEl.textContent = formatCountWithPercent(stats.types.face);
+  statsTypeJokerEl.textContent = formatCountWithPercent(stats.types.joker);
+
+  statsTopColorEl.textContent = determineLeader(stats.colors, {
+    red: "Piros",
+    black: "Fekete",
+    joker: "Joker",
+  });
+  statsTopSuitEl.textContent = determineLeader(stats.suits, SUIT_LABELS);
+  statsTopRankEl.textContent = determineLeader(stats.ranks, RANK_LABELS);
+
+  renderRankStats();
+}
+
+function renderRankStats() {
+  statsRanksEl.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  RANKS_WITH_JOKER.forEach((rank) => {
+    const item = document.createElement("div");
+    item.className = "rank-item";
+    const title = document.createElement("strong");
+    title.textContent = rank;
+    const value = document.createElement("span");
+    value.textContent = formatCountWithPercent(stats.ranks[rank]);
+    item.append(title, value);
+    fragment.appendChild(item);
+  });
+  statsRanksEl.appendChild(fragment);
+}
+
+function recordWinningCard(card) {
+  if (!card) return;
+  stats.rounds += 1;
+  if (!card.suit) {
+    stats.colors.joker += 1;
+    stats.suits.joker += 1;
+    stats.types.joker += 1;
+    stats.ranks.Joker += 1;
+    updateStatsDisplay();
+    return;
+  }
+
+  const colorKey = cardColor(card);
+  if (colorKey && stats.colors[colorKey] !== undefined) {
+    stats.colors[colorKey] += 1;
+  }
+
+  if (stats.suits[card.suit] !== undefined) {
+    stats.suits[card.suit] += 1;
+  }
+
+  if (FACE_RANKS.has(card.rank)) {
+    stats.types.face += 1;
+  } else {
+    stats.types.number += 1;
+  }
+
+  if (stats.ranks[card.rank] !== undefined) {
+    stats.ranks[card.rank] += 1;
+  }
+
+  updateStatsDisplay();
+}
+
 updateDisplays();
 resetLog();
 resetCards();
+updateStatsDisplay();
