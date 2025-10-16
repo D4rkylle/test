@@ -29,6 +29,75 @@ let selectedChip = null;
 let currentBets = new Map();
 let roundLocked = false;
 
+const audioState = {
+  context: null,
+};
+
+const SOUND_DEFINITIONS = {
+  chip: [
+    { frequency: 880, duration: 0.1, type: "sine", gain: 0.25 },
+  ],
+  deal: [
+    { frequency: 520, duration: 0.18, type: "triangle", gain: 0.2 },
+  ],
+  win: [
+    { frequency: 660, duration: 0.18, type: "sawtooth", gain: 0.18 },
+    { frequency: 880, duration: 0.14, type: "sine", gain: 0.18, delay: 0.1 },
+  ],
+};
+
+function ensureAudioContext() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!audioState.context) {
+    audioState.context = new AudioCtx();
+  }
+  if (audioState.context.state === "suspended") {
+    audioState.context.resume();
+  }
+  return audioState.context;
+}
+
+function unlockAudioContext() {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  if (unlockAudioContext.unlocked) return;
+  ctx.resume().then(() => {
+    unlockAudioContext.unlocked = true;
+  });
+}
+
+document.addEventListener("pointerdown", unlockAudioContext, { once: true });
+document.addEventListener("keydown", unlockAudioContext, { once: true });
+
+function playSound(name) {
+  const ctx = ensureAudioContext();
+  const steps = SOUND_DEFINITIONS[name];
+  if (!ctx || !steps) return;
+
+  const now = ctx.currentTime;
+  steps.forEach((step) => {
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const start = now + (step.delay ?? 0);
+    const duration = step.duration ?? 0.15;
+    const peakGain = step.gain ?? 0.25;
+
+    oscillator.type = step.type ?? "sine";
+    oscillator.frequency.value = step.frequency;
+
+    gainNode.gain.setValueAtTime(0, start);
+    gainNode.gain.linearRampToValueAtTime(peakGain, start + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.05);
+  });
+}
+
 const stats = {
   rounds: 0,
   colors: { red: 0, black: 0, joker: 0 },
@@ -184,6 +253,7 @@ function selectChip(button) {
   if (button) {
     button.classList.add("active");
     selectedChip = Number(button.dataset.value);
+    playSound("chip");
   } else {
     selectedChip = null;
   }
@@ -253,6 +323,7 @@ function placeBet(spot) {
   currentBetTotal = roundCurrency(currentBetTotal + selectedChip);
   renderBetAmount(spot, newAmount);
   updateDisplays();
+  playSound("chip");
 }
 
 function clearSpot(spot) {
@@ -367,6 +438,9 @@ function startRound() {
   });
 
   bankroll = roundCurrency(bankroll + winnings);
+  if (winnings > 0) {
+    playSound("win");
+  }
   currentBets = new Map();
   updateDisplays();
 }
@@ -409,6 +483,7 @@ function displayCards(cards) {
     cardsContainer.appendChild(cardEl);
     requestAnimationFrame(() => {
       setTimeout(() => {
+        playSound("deal");
         cardEl.classList.remove("card--face-down");
         cardEl.classList.add("card--revealed");
         setTimeout(() => {
@@ -433,7 +508,7 @@ function buildCardElement(card, index) {
   const inner = document.createElement("div");
   inner.className = "card__inner";
 
-  const front = buildCardFront(card, index);
+  const front = buildCardFront(card);
   const back = buildCardBack();
 
   inner.append(front, back);
@@ -441,13 +516,9 @@ function buildCardElement(card, index) {
   return cardEl;
 }
 
-function buildCardFront(card, index) {
+function buildCardFront(card) {
   const front = document.createElement("div");
   front.className = "card__face card__face--front";
-
-  const indexBadge = document.createElement("div");
-  indexBadge.className = "card__index";
-  indexBadge.textContent = `#${index + 1}`;
 
   const layout = document.createElement("div");
   layout.className = "card__layout";
@@ -457,7 +528,7 @@ function buildCardFront(card, index) {
   const bottomCorner = buildCardCorner(card, "bottom");
 
   layout.append(topCorner, centerFace, bottomCorner);
-  front.append(indexBadge, layout);
+  front.append(layout);
   return front;
 }
 
