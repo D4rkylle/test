@@ -79,6 +79,82 @@ const statsTypeFaceEl = document.getElementById("stats-type-face");
 const statsTypeJokerEl = document.getElementById("stats-type-joker");
 const statsRanksEl = document.getElementById("stats-ranks");
 
+const PIP_LAYOUTS = {
+  A: [[3, 2]],
+  "2": [
+    [1, 2],
+    [5, 2],
+  ],
+  "3": [
+    [1, 2],
+    [3, 2],
+    [5, 2],
+  ],
+  "4": [
+    [1, 1],
+    [1, 3],
+    [5, 1],
+    [5, 3],
+  ],
+  "5": [
+    [1, 1],
+    [1, 3],
+    [3, 2],
+    [5, 1],
+    [5, 3],
+  ],
+  "6": [
+    [1, 1],
+    [1, 3],
+    [3, 1],
+    [3, 3],
+    [5, 1],
+    [5, 3],
+  ],
+  "7": [
+    [1, 1],
+    [1, 3],
+    [3, 1],
+    [3, 3],
+    [5, 1],
+    [5, 3],
+    [2, 2],
+  ],
+  "8": [
+    [1, 1],
+    [1, 3],
+    [3, 1],
+    [3, 3],
+    [5, 1],
+    [5, 3],
+    [2, 2],
+    [4, 2],
+  ],
+  "9": [
+    [1, 1],
+    [1, 3],
+    [3, 1],
+    [3, 3],
+    [5, 1],
+    [5, 3],
+    [2, 2],
+    [4, 2],
+    [3, 2],
+  ],
+  "10": [
+    [1, 1],
+    [1, 3],
+    [3, 1],
+    [3, 3],
+    [5, 1],
+    [5, 3],
+    [2, 2],
+    [4, 2],
+    [2, 1],
+    [4, 3],
+  ],
+};
+
 function roundCurrency(value) {
   return Math.round(value * 100) / 100;
 }
@@ -329,26 +405,71 @@ function rollDie() {
 function displayCards(cards) {
   resetCards();
   cards.forEach((card, index) => {
-    const cardEl = document.createElement("div");
-    cardEl.className = [
-      "card",
-      cardColor(card) ?? "",
-      cardVisualClass(card),
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-    const indexBadge = document.createElement("div");
-    indexBadge.className = "card__index";
-    indexBadge.textContent = `#${index + 1}`;
-
-    const topCorner = buildCardCorner(card, "top");
-    const centerFace = buildCardCenter(card);
-    const bottomCorner = buildCardCorner(card, "bottom");
-
-    cardEl.append(indexBadge, topCorner, centerFace, bottomCorner);
+    const cardEl = buildCardElement(card, index);
     cardsContainer.appendChild(cardEl);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        cardEl.classList.remove("card--face-down");
+        cardEl.classList.add("card--revealed");
+        setTimeout(() => {
+          cardEl.classList.remove("card--revealed");
+        }, 800);
+      }, 250 + index * 400);
+    });
   });
+}
+
+function buildCardElement(card, index) {
+  const cardEl = document.createElement("div");
+  cardEl.className = [
+    "card",
+    "card--face-down",
+    cardColor(card) ?? "",
+    cardVisualClass(card),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const inner = document.createElement("div");
+  inner.className = "card__inner";
+
+  const front = buildCardFront(card, index);
+  const back = buildCardBack();
+
+  inner.append(front, back);
+  cardEl.appendChild(inner);
+  return cardEl;
+}
+
+function buildCardFront(card, index) {
+  const front = document.createElement("div");
+  front.className = "card__face card__face--front";
+
+  const indexBadge = document.createElement("div");
+  indexBadge.className = "card__index";
+  indexBadge.textContent = `#${index + 1}`;
+
+  const layout = document.createElement("div");
+  layout.className = "card__layout";
+
+  const topCorner = buildCardCorner(card, "top");
+  const centerFace = buildCardCenter(card);
+  const bottomCorner = buildCardCorner(card, "bottom");
+
+  layout.append(topCorner, centerFace, bottomCorner);
+  front.append(indexBadge, layout);
+  return front;
+}
+
+function buildCardBack() {
+  const back = document.createElement("div");
+  back.className = "card__face card__face--back";
+
+  const pattern = document.createElement("div");
+  pattern.className = "card__back-pattern";
+  back.appendChild(pattern);
+
+  return back;
 }
 
 function cardVisualClass(card) {
@@ -380,10 +501,9 @@ function buildCardCorner(card, position) {
 }
 
 function buildCardCenter(card) {
-  const center = document.createElement("div");
-  center.className = "card__center";
-
   if (!card.suit) {
+    const center = document.createElement("div");
+    center.className = "card__center card__center--joker";
     const icon = document.createElement("div");
     icon.className = "card__joker-icon";
     icon.textContent = "★";
@@ -394,15 +514,52 @@ function buildCardCenter(card) {
     return center;
   }
 
+  if (card.rank === "A" || NUMBER_RANKS.has(card.rank)) {
+    return buildPipCenter(card);
+  }
+
+  return buildFaceCardCenter(card);
+}
+
+function buildPipCenter(card) {
+  const center = document.createElement("div");
+  center.className = "card__center card__center--pips";
+
+  const layoutKey = card.rank === "A" ? "A" : card.rank;
+  const positions = PIP_LAYOUTS[layoutKey] || [[3, 2]];
+
+  const pipGrid = document.createElement("div");
+  pipGrid.className = `card__pips card__pips--${layoutKey}`;
+
+  positions.forEach(([row, col]) => {
+    const pip = document.createElement("span");
+    pip.className = "card__pip";
+    if (row > 3) {
+      pip.classList.add("card__pip--flip");
+    }
+    pip.textContent = cardSuitSymbol(card);
+    pip.style.setProperty("--row", row);
+    pip.style.setProperty("--col", col);
+    pipGrid.appendChild(pip);
+  });
+
+  center.appendChild(pipGrid);
+  return center;
+}
+
+function buildFaceCardCenter(card) {
+  const center = document.createElement("div");
+  center.className = "card__center card__center--face";
+
+  const crest = document.createElement("div");
+  crest.className = "card__face-crest";
+  crest.textContent = card.rank;
+
   const suit = document.createElement("div");
-  suit.className = "card__center-suit";
+  suit.className = "card__face-suit";
   suit.textContent = cardSuitSymbol(card);
 
-  const rank = document.createElement("div");
-  rank.className = "card__center-rank";
-  rank.textContent = card.rank;
-
-  center.append(suit, rank);
+  center.append(crest, suit);
   return center;
 }
 
