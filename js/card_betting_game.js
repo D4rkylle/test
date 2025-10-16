@@ -39,6 +39,10 @@ const clearAllButton = document.getElementById("clear-all");
 const chipButtons = Array.from(document.querySelectorAll(".chip"));
 const betSpots = Array.from(document.querySelectorAll(".bet-spot"));
 
+function roundCurrency(value) {
+  return Math.round(value * 100) / 100;
+}
+
 function updateDisplays() {
   bankrollDisplay.textContent = bankroll.toFixed(2);
   betTotalDisplay.textContent = currentBetTotal.toFixed(2);
@@ -84,11 +88,35 @@ chipButtons.forEach((button, index) => {
 });
 
 function currentAvailable() {
-  return bankroll - currentBetTotal;
+  return roundCurrency(bankroll - currentBetTotal);
 }
 
 function formatCurrency(value) {
   return `${value.toFixed(2)} kredit`;
+}
+
+function formatBetChipLabel(value) {
+  if (Number.isInteger(value)) {
+    return value.toString();
+  }
+  return value.toFixed(2).replace(/\.00$/, "").replace(/0$/, "");
+}
+
+function renderBetAmount(spot, amount) {
+  const amountEl = spot.querySelector(".bet-amount");
+  if (!amountEl) return;
+
+  amountEl.innerHTML = "";
+  const normalized = roundCurrency(amount);
+  if (normalized > 0) {
+    const chipEl = document.createElement("div");
+    chipEl.className = "bet-chip";
+    chipEl.textContent = formatBetChipLabel(normalized);
+    amountEl.appendChild(chipEl);
+    spot.classList.add("has-bet");
+  } else {
+    spot.classList.remove("has-bet");
+  }
 }
 
 function placeBet(spot) {
@@ -104,11 +132,10 @@ function placeBet(spot) {
 
   const key = spotKey(spot);
   const currentAmount = currentBets.get(key) || 0;
-  const newAmount = currentAmount + selectedChip;
+  const newAmount = roundCurrency(currentAmount + selectedChip);
   currentBets.set(key, newAmount);
-  currentBetTotal += selectedChip;
-  spot.classList.add("has-bet");
-  spot.querySelector(".bet-amount").textContent = formatCurrency(newAmount);
+  currentBetTotal = roundCurrency(currentBetTotal + selectedChip);
+  renderBetAmount(spot, newAmount);
   updateDisplays();
 }
 
@@ -117,10 +144,9 @@ function clearSpot(spot) {
   const key = spotKey(spot);
   const currentAmount = currentBets.get(key);
   if (!currentAmount) return;
-  currentBetTotal -= currentAmount;
+  currentBetTotal = roundCurrency(currentBetTotal - currentAmount);
   currentBets.delete(key);
-  spot.classList.remove("has-bet");
-  spot.querySelector(".bet-amount").textContent = "";
+  renderBetAmount(spot, 0);
   updateDisplays();
 }
 
@@ -129,9 +155,7 @@ function clearAllBets() {
   currentBetTotal = 0;
   currentBets.clear();
   betSpots.forEach((spot) => {
-    spot.classList.remove("has-bet");
-    const amountEl = spot.querySelector(".bet-amount");
-    if (amountEl) amountEl.textContent = "";
+    renderBetAmount(spot, 0);
   });
   updateDisplays();
 }
@@ -194,11 +218,11 @@ function startRound() {
   displayDie(dieResult);
   const betEntries = Array.from(currentBets.entries());
   const totalWager = currentBetTotal;
-  bankroll -= totalWager;
+  bankroll = roundCurrency(bankroll - totalWager);
   currentBetTotal = 0;
 
   if (dieResult === 6) {
-    bankroll += totalWager;
+    bankroll = roundCurrency(bankroll + totalWager);
     addLog("A dobókocka hatost mutatott: minden tét visszajár.");
     updateDisplays();
     return;
@@ -215,17 +239,17 @@ function startRound() {
     const [betType, betKey] = key.split(":");
     const outcome = resolveBet(betType, betKey, amount, cards, winningIndex, pokerResults);
     if (outcome.type === "win") {
-      winnings += amount + outcome.profit;
+      winnings = roundCurrency(winnings + amount + outcome.profit);
       addLog(`✔ ${describeBet(betType, betKey)} nyert! Nyereség: ${outcome.profit.toFixed(2)} kredit.`);
     } else if (outcome.type === "push") {
-      winnings += amount;
+      winnings = roundCurrency(winnings + amount);
       addLog(`↺ ${describeBet(betType, betKey)} push. A tét visszajár.`);
     } else {
       addLog(`✖ ${describeBet(betType, betKey)} veszített.`);
     }
   });
 
-  bankroll += winnings;
+  bankroll = roundCurrency(bankroll + winnings);
   currentBets = new Map();
   updateDisplays();
 }
