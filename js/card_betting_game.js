@@ -330,19 +330,80 @@ function displayCards(cards) {
   resetCards();
   cards.forEach((card, index) => {
     const cardEl = document.createElement("div");
-    cardEl.className = `card ${cardColor(card) ?? ""}`.trim();
-    const rankEl = document.createElement("div");
-    rankEl.className = "rank";
-    rankEl.textContent = card.rank;
-    const indexEl = document.createElement("div");
-    indexEl.className = "index";
-    indexEl.textContent = `#${index + 1}`;
-    const suitEl = document.createElement("div");
-    suitEl.className = "suit";
-    suitEl.textContent = cardSuitSymbol(card);
-    cardEl.append(indexEl, rankEl, suitEl);
+    cardEl.className = [
+      "card",
+      cardColor(card) ?? "",
+      cardVisualClass(card),
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const indexBadge = document.createElement("div");
+    indexBadge.className = "card__index";
+    indexBadge.textContent = `#${index + 1}`;
+
+    const topCorner = buildCardCorner(card, "top");
+    const centerFace = buildCardCenter(card);
+    const bottomCorner = buildCardCorner(card, "bottom");
+
+    cardEl.append(indexBadge, topCorner, centerFace, bottomCorner);
     cardsContainer.appendChild(cardEl);
   });
+}
+
+function cardVisualClass(card) {
+  if (!card.suit) return "card--joker";
+  return `card--${card.suit}`;
+}
+
+function buildCardCorner(card, position) {
+  const corner = document.createElement("div");
+  corner.className = `card__corner card__corner--${position}`;
+
+  const rankSpan = document.createElement("span");
+  rankSpan.className = "card__rank";
+
+  const suitSpan = document.createElement("span");
+  suitSpan.className = "card__suit";
+
+  if (!card.suit) {
+    corner.classList.add("card__corner--joker");
+    rankSpan.textContent = "J";
+    suitSpan.textContent = "★";
+  } else {
+    rankSpan.textContent = card.rank;
+    suitSpan.textContent = cardSuitSymbol(card);
+  }
+
+  corner.append(rankSpan, suitSpan);
+  return corner;
+}
+
+function buildCardCenter(card) {
+  const center = document.createElement("div");
+  center.className = "card__center";
+
+  if (!card.suit) {
+    const icon = document.createElement("div");
+    icon.className = "card__joker-icon";
+    icon.textContent = "★";
+    const label = document.createElement("div");
+    label.className = "card__joker-label";
+    label.textContent = "JOKER";
+    center.append(icon, label);
+    return center;
+  }
+
+  const suit = document.createElement("div");
+  suit.className = "card__center-suit";
+  suit.textContent = cardSuitSymbol(card);
+
+  const rank = document.createElement("div");
+  rank.className = "card__center-rank";
+  rank.textContent = card.rank;
+
+  center.append(suit, rank);
+  return center;
 }
 
 function displayDie(result) {
