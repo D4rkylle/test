@@ -40,6 +40,10 @@ const SOUND_DEFINITIONS = {
   deal: [
     { frequency: 520, duration: 0.18, type: "triangle", gain: 0.2 },
   ],
+  dice: [
+    { frequency: 240, duration: 0.12, type: "square", gain: 0.18 },
+    { frequency: 180, duration: 0.18, type: "triangle", gain: 0.14, delay: 0.08 },
+  ],
   win: [
     { frequency: 660, duration: 0.18, type: "sawtooth", gain: 0.18 },
     { frequency: 880, duration: 0.14, type: "sine", gain: 0.18, delay: 0.1 },
@@ -127,6 +131,9 @@ const betTotalDisplay = document.getElementById("bet-total-display");
 const logList = document.getElementById("log");
 const cardsContainer = document.getElementById("cards-container");
 const diceResultEl = document.getElementById("dice-result");
+const diceEl = document.getElementById("dice");
+const diceCubeEl = diceEl ? diceEl.querySelector(".dice__cube") : null;
+const diceValueEl = document.getElementById("dice-value");
 const dealButton = document.getElementById("deal-button");
 const clearAllButton = document.getElementById("clear-all");
 const chipButtons = Array.from(document.querySelectorAll(".chip"));
@@ -147,6 +154,19 @@ const statsTypeNumberEl = document.getElementById("stats-type-number");
 const statsTypeFaceEl = document.getElementById("stats-type-face");
 const statsTypeJokerEl = document.getElementById("stats-type-joker");
 const statsRanksEl = document.getElementById("stats-ranks");
+
+const DEFAULT_DICE_TEXT = "Várakozás a dobásra…";
+const DICE_TRANSFORMS = {
+  1: "rotateX(0deg) rotateY(0deg)",
+  2: "rotateX(0deg) rotateY(-90deg)",
+  3: "rotateX(-90deg) rotateY(0deg)",
+  4: "rotateX(90deg) rotateY(0deg)",
+  5: "rotateX(0deg) rotateY(90deg)",
+  6: "rotateX(0deg) rotateY(180deg)",
+};
+
+let diceRollTimeout = null;
+let diceFinalTimeout = null;
 
 const PIP_LAYOUTS = {
   A: [[3, 2]],
@@ -245,7 +265,40 @@ function resetLog() {
 
 function resetCards() {
   cardsContainer.innerHTML = "";
-  diceResultEl.textContent = "";
+}
+
+function clearDiceTimers() {
+  if (diceRollTimeout) {
+    clearTimeout(diceRollTimeout);
+    diceRollTimeout = null;
+  }
+  if (diceFinalTimeout) {
+    clearTimeout(diceFinalTimeout);
+    diceFinalTimeout = null;
+  }
+}
+
+function setDiceTransform(transform, { animate = true } = {}) {
+  if (!diceCubeEl) return;
+  if (!animate) {
+    diceCubeEl.classList.add("dice__cube--resetting");
+  }
+  diceCubeEl.style.transform = transform;
+  if (!animate) {
+    diceCubeEl.offsetHeight;
+    diceCubeEl.classList.remove("dice__cube--resetting");
+  }
+}
+
+function resetDice(options = {}) {
+  const { immediate = false } = options;
+  if (!diceEl || !diceCubeEl || !diceValueEl) {
+    return;
+  }
+  clearDiceTimers();
+  diceEl.classList.remove("dice--rolling");
+  setDiceTransform(DICE_TRANSFORMS[1], { animate: !immediate });
+  diceValueEl.textContent = DEFAULT_DICE_TEXT;
 }
 
 function selectChip(button) {
@@ -389,6 +442,7 @@ function prepareNextRound() {
   roundLocked = false;
   dealButton.textContent = "Osztás";
   resetCards();
+  resetDice({ immediate: true });
   resetLog();
   clearAllBets();
   updateDisplays();
@@ -635,7 +689,35 @@ function buildFaceCardCenter(card) {
 }
 
 function displayDie(result) {
-  diceResultEl.textContent = `Dobás eredménye: ${result}`;
+  if (!diceEl || !diceCubeEl || !diceValueEl) {
+    diceResultEl.textContent = `Dobás eredménye: ${result}`;
+    return;
+  }
+
+  clearDiceTimers();
+  diceEl.classList.add("dice--rolling");
+  diceValueEl.textContent = "Dobás folyamatban…";
+  playSound("dice");
+
+  const wobbleDuration = 900;
+  diceRollTimeout = window.setTimeout(() => {
+    diceEl.classList.remove("dice--rolling");
+    const randomTurnsX = (Math.floor(Math.random() * 6) + 2) * 90;
+    const randomTurnsY = (Math.floor(Math.random() * 6) + 2) * 90;
+    setDiceTransform(`rotateX(${randomTurnsX}deg) rotateY(${randomTurnsY}deg)`);
+
+    diceFinalTimeout = window.setTimeout(() => {
+      const transform = DICE_TRANSFORMS[result] ?? DICE_TRANSFORMS[1];
+      setDiceTransform(transform);
+      diceValueEl.textContent =
+        result === 6
+          ? "Dobás: 6 – minden tét visszajár."
+          : `Dobás eredménye: ${result}`;
+      diceFinalTimeout = null;
+    }, 300);
+
+    diceRollTimeout = null;
+  }, wobbleDuration);
 }
 
 function cardColor(card) {
@@ -897,4 +979,5 @@ function recordWinningCard(card) {
 updateDisplays();
 resetLog();
 resetCards();
+resetDice({ immediate: true });
 updateStatsDisplay();
