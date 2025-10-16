@@ -6,19 +6,20 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.25rem clamp(1rem, 2vw, 2rem);
+  height: 100vh;
+  display: grid;
+  grid-template-rows: min-content 1fr;
+  justify-items: center;
+  padding: clamp(0.75rem, 1.6vh, 1.25rem) clamp(1rem, 2.5vw, 2.25rem);
   box-sizing: border-box;
   background: radial-gradient(circle at center, #145a32, #0b2e13 70%);
+  overflow: hidden;
 }
 
 .app-header {
   width: min(100%, 1500px);
   text-align: center;
-  padding: 0 1rem 0.75rem;
+  padding: 0 1rem clamp(0.5rem, 1.1vh, 0.9rem);
   color: #fefefe;
 }
 
@@ -28,15 +29,16 @@ body {
 }
 
 .app-layout {
-  flex: 1;
   width: min(100%, 1500px);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 300px;
   gap: 1.25rem;
-  padding: 1rem clamp(1rem, 2vw, 2rem) 1.5rem;
+  padding: clamp(0.75rem, 1.4vh, 1rem) clamp(1rem, 2vw, 2rem) clamp(1rem, 2vh, 1.4rem);
   box-sizing: border-box;
-  max-height: min(calc(100vh - 220px), 860px);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .bankroll-panel,
@@ -49,6 +51,7 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .bankroll-panel {
@@ -820,10 +823,16 @@ body {
 }
 
 @media (max-width: 1100px) {
+  body {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
   .app-layout {
     grid-template-columns: 1fr;
-    max-height: none;
     height: auto;
+    overflow: visible;
   }
 
   .bankroll-panel,
@@ -844,5 +853,79 @@ body {
 
   .stats-ranks {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-height: 900px) {
+  .app-header h1 {
+    font-size: clamp(1.5rem, 2vw, 1.75rem);
+  }
+
+  .app-header p {
+    font-size: 0.95rem;
+  }
+
+  .chip {
+    width: 56px;
+    height: 56px;
+    font-size: 0.95rem;
+  }
+
+  .stats-panel {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .stats-block p {
+    font-size: 0.95rem;
+  }
+
+  .stats-section h3 {
+    font-size: 0.95rem;
+  }
+
+  .stats-section li {
+    font-size: 0.85rem;
+  }
+
+  .table {
+    padding: 1.1rem;
+    gap: 1rem;
+  }
+
+  .bet-group h2 {
+    font-size: 1.15rem;
+  }
+
+  .bet-spot {
+    padding: 0.6rem;
+    min-height: 110px;
+  }
+
+  .bet-amount {
+    min-height: 60px;
+  }
+
+  .cards-container {
+    gap: 0.6rem;
+    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+  }
+
+  .card__face {
+    padding: clamp(0.5rem, 1.2vw, 0.7rem);
+  }
+
+  .card__rank {
+    font-size: clamp(1.1rem, 2.4vw, 1.35rem);
+  }
+
+  .card__suit,
+  .card__center-suit,
+  .card__center-rank {
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+  }
+
+  .card__joker-icon {
+    font-size: 2.1rem;
   }
 }
