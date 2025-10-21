@@ -215,12 +215,12 @@
         </div>
       </section>
       <section class="results-panel">
-        <div class="cards-display" aria-live="polite">
-          <div class="cards-display__header">
-            <h2>Felfordított lapok</h2>
-          </div>
-          <div class="cards-display__grid">
-            <div class="cards-display__left">
+        <div class="results-sections">
+          <section class="results-section results-section--cards" aria-live="polite">
+            <div class="results-section__header">
+              <h2>Felfordított lapok</h2>
+            </div>
+            <div class="results-section__body results-section__body--cards">
               <div id="cards-container" class="cards-container"></div>
               <div class="bet-breakdown">
                 <h3>Tétek eredményei</h3>
@@ -231,7 +231,9 @@
                 </ul>
               </div>
             </div>
-            <div class="cards-display__right">
+          </section>
+          <section class="results-section results-section--dice">
+            <div class="results-section__body results-section__body--dice">
               <div class="dice-display">
                 <h3>Dobókocka</h3>
                 <div class="dice-display__current" tabindex="0">
@@ -287,7 +289,7 @@
                 </ul>
               </div>
             </div>
-          </div>
+          </section>
         </div>
         <div class="log-panel" aria-live="polite">
           <h2>Eredmények</h2>
