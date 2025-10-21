@@ -14,6 +14,7 @@ const PAYOUTS = {
   face: 2.0,
   high_low_seven: 1.0,
   high_low_previous: 1.0,
+  rank_exact: 12.0,
   pair: 1.0,
   drill: 5.0,
   straight: 10.0,
@@ -997,6 +998,9 @@ function describeBet(type, key) {
     "poker:poker": "Póker",
     "joker:joker": "Joker",
   };
+  if (type === "rank_exact") {
+    return key === "10" ? "Lap érték: 10" : `Lap érték: ${key}`;
+  }
   return lookup[`${type}:${key}`] ?? `${type} (${key})`;
 }
 
@@ -1099,6 +1103,16 @@ function resolveBet(betType, betKey, amount, cards, winningIndex, pokerResults) 
     }
     const comparison = winningValue > previousValue ? "higher" : "lower";
     if (comparison === betKey) {
+      return { type: "win", profit: amount * payoutMultiplier };
+    }
+    return { type: "loss" };
+  }
+
+  if (betType === "rank_exact") {
+    if (!winningCard.suit) {
+      return { type: "loss" };
+    }
+    if (winningCard.rank === betKey) {
       return { type: "win", profit: amount * payoutMultiplier };
     }
     return { type: "loss" };

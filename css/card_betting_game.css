@@ -370,6 +370,10 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.bet-grid.rank-grid {
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+}
+
 .bet-grid.single-col {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -406,6 +410,19 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: center;
+}
+
+.bet-spot--compact {
+  padding: 0.55rem;
+  min-height: clamp(86px, 10.5vh, 104px);
+}
+
+.bet-spot--compact .bet-amount {
+  min-height: clamp(46px, 6vh, 56px);
+}
+
+.bet-spot--compact button {
+  font-size: clamp(0.8rem, 1.2vw, 0.95rem);
 }
 
 .bet-chip {
