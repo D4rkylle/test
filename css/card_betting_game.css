@@ -37,7 +37,7 @@ body {
   margin: 0;
   display: grid;
   grid-template-columns: clamp(260px, 18vw, 320px) minmax(0, 1fr)
-    clamp(420px, 30vw, 620px);
+    clamp(460px, 33vw, 660px);
   gap: clamp(1rem, 2.1vw, 1.5rem);
   padding: clamp(0.6rem, 1.2vh, 0.9rem)
     clamp(0.75rem, 1.8vw, 1.6rem)
@@ -489,19 +489,25 @@ body {
 }
 
 .results-section__body--cards {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(220px, 36%, 300px);
-  gap: clamp(0.75rem, 1.3vw, 1.05rem);
-  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-height: 0;
 }
 
 .results-section__body--dice {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.75rem, 1.2vw, 1rem);
+  gap: clamp(0.85rem, 1.4vw, 1.1rem);
   align-items: stretch;
   min-height: 0;
+}
+
+.dice-bet-wrapper {
+  display: grid;
+  grid-template-columns: clamp(200px, 38%, 240px) minmax(0, 1fr);
+  gap: clamp(0.8rem, 1.2vw, 1rem);
+  align-items: stretch;
 }
 
 .log-panel {
@@ -520,17 +526,17 @@ body {
 .cards-container {
   display: flex;
   justify-content: flex-start;
-  gap: clamp(0.4rem, 0.9vw, 0.65rem);
+  gap: clamp(0.35rem, 0.7vw, 0.6rem);
   align-items: stretch;
   flex-wrap: nowrap;
-  overflow: hidden;
-  padding: 0.1rem 0.3rem 0.3rem;
+  overflow: visible;
+  padding: 0.1rem 0.2rem 0.3rem;
   min-height: 0;
-  flex: 1 1 auto;
+  width: 100%;
 }
 
 .cards-container .card {
-  flex: 0 0 clamp(52px, 5.6vw, 88px);
+  flex: 0 0 clamp(48px, 4.9vw, 78px);
 }
 
 .bet-breakdown {
@@ -543,6 +549,7 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .bet-breakdown h3 {
@@ -562,7 +569,6 @@ body {
   gap: 0.45rem;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
 }
 
 .bet-breakdown__item {
@@ -1310,12 +1316,15 @@ body {
   }
 
   .results-section__body--cards {
-    grid-template-columns: 1fr;
+    align-items: center;
   }
 
   .results-section__body--dice {
-    display: flex;
-    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .dice-bet-wrapper {
+    grid-template-columns: 1fr;
   }
 
   .cards-container {
@@ -1388,8 +1397,9 @@ body {
   }
 
   .cards-container {
-    gap: 0.6rem;
-    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+    gap: 0.45rem;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .card__face {
