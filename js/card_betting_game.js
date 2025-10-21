@@ -28,6 +28,7 @@ let currentBetTotal = 0;
 let selectedChip = null;
 let currentBets = new Map();
 let roundLocked = false;
+let roundComplete = false;
 
 const audioState = {
   context: null,
@@ -134,6 +135,8 @@ const diceResultEl = document.getElementById("dice-result");
 const diceEl = document.getElementById("dice");
 const diceCubeEl = diceEl ? diceEl.querySelector(".dice__cube") : null;
 const diceValueEl = document.getElementById("dice-value");
+const diceHistoryList = document.getElementById("dice-history-list");
+const diceHistoryEmpty = document.getElementById("dice-history-empty");
 const dealButton = document.getElementById("deal-button");
 const clearAllButton = document.getElementById("clear-all");
 const chipButtons = Array.from(document.querySelectorAll(".chip"));
@@ -167,6 +170,9 @@ const DICE_TRANSFORMS = {
 
 let diceRollTimeout = null;
 let diceFinalTimeout = null;
+let dicePendingResolver = null;
+let historyCounter = 0;
+const MAX_HISTORY_ITEMS = 15;
 
 const PIP_LAYOUTS = {
   A: [[3, 2]],
@@ -267,7 +273,16 @@ function resetCards() {
   cardsContainer.innerHTML = "";
 }
 
-function clearDiceTimers() {
+function resolveDicePromise() {
+  if (typeof dicePendingResolver === "function") {
+    const resolver = dicePendingResolver;
+    dicePendingResolver = null;
+    resolver();
+  }
+}
+
+function clearDiceTimers(options = {}) {
+  const { resolvePending = false } = options;
   if (diceRollTimeout) {
     clearTimeout(diceRollTimeout);
     diceRollTimeout = null;
@@ -275,6 +290,9 @@ function clearDiceTimers() {
   if (diceFinalTimeout) {
     clearTimeout(diceFinalTimeout);
     diceFinalTimeout = null;
+  }
+  if (resolvePending) {
+    resolveDicePromise();
   }
 }
 
@@ -295,7 +313,7 @@ function resetDice(options = {}) {
   if (!diceEl || !diceCubeEl || !diceValueEl) {
     return;
   }
-  clearDiceTimers();
+  clearDiceTimers({ resolvePending: true });
   diceEl.classList.remove("dice--rolling");
   setDiceTransform(DICE_TRANSFORMS[1], { animate: !immediate });
   diceValueEl.textContent = DEFAULT_DICE_TEXT;
@@ -424,7 +442,9 @@ clearAllButton.addEventListener("click", clearAllBets);
 
 dealButton.addEventListener("click", () => {
   if (roundLocked) {
-    prepareNextRound();
+    if (roundComplete) {
+      prepareNextRound();
+    }
     return;
   }
   if (currentBetTotal <= 0) {
@@ -440,6 +460,8 @@ dealButton.addEventListener("click", () => {
 
 function prepareNextRound() {
   roundLocked = false;
+  roundComplete = false;
+  dealButton.disabled = false;
   dealButton.textContent = "Osztás";
   resetCards();
   resetDice({ immediate: true });
@@ -448,55 +470,73 @@ function prepareNextRound() {
   updateDisplays();
 }
 
-function startRound() {
+async function startRound() {
   roundLocked = true;
-  dealButton.textContent = "Következő kör";
+  roundComplete = false;
+  dealButton.disabled = true;
+  dealButton.textContent = "Kör folyamatban…";
   const deck = buildDeck();
   shuffleDeck(deck);
   const cards = dealCards(deck, 5);
   displayCards(cards);
   const dieResult = rollDie();
-  displayDie(dieResult);
+  const diceAnimation = displayDie(dieResult);
   const betEntries = Array.from(currentBets.entries());
   const totalWager = currentBetTotal;
-  bankroll = roundCurrency(bankroll - totalWager);
-  currentBetTotal = 0;
-
-  if (dieResult === 6) {
-    bankroll = roundCurrency(bankroll + totalWager);
-    addLog("A dobókocka hatost mutatott: minden tét visszajár.");
-    updateDisplays();
-    return;
-  }
-
-  const winningIndex = dieResult - 1;
-  const winningCard = cards[winningIndex];
-  addLog(`Nyerő lap: #${dieResult} – ${describeCard(winningCard)}.`);
-  recordWinningCard(winningCard);
-  const pokerResults = evaluatePokerCombinations(cards);
+  await diceAnimation;
 
   let winnings = 0;
+  let winningIndex = null;
 
-  betEntries.forEach(([key, amount]) => {
-    const [betType, betKey] = key.split(":");
-    const outcome = resolveBet(betType, betKey, amount, cards, winningIndex, pokerResults);
-    if (outcome.type === "win") {
-      winnings = roundCurrency(winnings + amount + outcome.profit);
-      addLog(`✔ ${describeBet(betType, betKey)} nyert! Nyereség: ${outcome.profit.toFixed(2)} kredit.`);
-    } else if (outcome.type === "push") {
-      winnings = roundCurrency(winnings + amount);
-      addLog(`↺ ${describeBet(betType, betKey)} push. A tét visszajár.`);
-    } else {
-      addLog(`✖ ${describeBet(betType, betKey)} veszített.`);
-    }
-  });
+  if (dieResult === 6) {
+    winnings = totalWager;
+    addLog("Dobás: 6 – minden tét visszajár.");
+  } else {
+    winningIndex = dieResult - 1;
+    const winningCard = cards[winningIndex];
+    addLog(`Dobás: ${dieResult}.`);
+    addLog(`Nyerő lap: #${dieResult} – ${describeCard(winningCard)}.`);
+    recordWinningCard(winningCard);
+    const pokerResults = evaluatePokerCombinations(cards);
 
-  bankroll = roundCurrency(bankroll + winnings);
-  if (winnings > 0) {
+    betEntries.forEach(([key, amount]) => {
+      const [betType, betKey] = key.split(":");
+      const outcome = resolveBet(
+        betType,
+        betKey,
+        amount,
+        cards,
+        winningIndex,
+        pokerResults,
+      );
+      if (outcome.type === "win") {
+        winnings = roundCurrency(winnings + amount + outcome.profit);
+        addLog(
+          `✔ ${describeBet(betType, betKey)} nyert! Nyereség: ${outcome.profit.toFixed(2)} kredit.`,
+        );
+      } else if (outcome.type === "push") {
+        winnings = roundCurrency(winnings + amount);
+        addLog(`↺ ${describeBet(betType, betKey)} push. A tét visszajár.`);
+      } else {
+        addLog(`✖ ${describeBet(betType, betKey)} veszített.`);
+      }
+    });
+  }
+
+  bankroll = roundCurrency(bankroll - totalWager + winnings);
+  const netGain = roundCurrency(winnings - totalWager);
+  if (netGain > 0) {
     playSound("win");
   }
+  currentBetTotal = 0;
   currentBets = new Map();
   updateDisplays();
+
+  addDiceHistoryEntry(cards, dieResult, winningIndex);
+
+  roundComplete = true;
+  dealButton.disabled = false;
+  dealButton.textContent = "Következő kör";
 }
 
 function buildDeck() {
@@ -691,33 +731,124 @@ function buildFaceCardCenter(card) {
 function displayDie(result) {
   if (!diceEl || !diceCubeEl || !diceValueEl) {
     diceResultEl.textContent = `Dobás eredménye: ${result}`;
-    return;
+    return Promise.resolve();
   }
 
-  clearDiceTimers();
+  clearDiceTimers({ resolvePending: true });
   diceEl.classList.add("dice--rolling");
   diceValueEl.textContent = "Dobás folyamatban…";
   playSound("dice");
 
-  const wobbleDuration = 900;
-  diceRollTimeout = window.setTimeout(() => {
-    diceEl.classList.remove("dice--rolling");
-    const randomTurnsX = (Math.floor(Math.random() * 6) + 2) * 90;
-    const randomTurnsY = (Math.floor(Math.random() * 6) + 2) * 90;
-    setDiceTransform(`rotateX(${randomTurnsX}deg) rotateY(${randomTurnsY}deg)`);
+  return new Promise((resolve) => {
+    dicePendingResolver = () => {
+      resolve();
+      dicePendingResolver = null;
+    };
 
-    diceFinalTimeout = window.setTimeout(() => {
-      const transform = DICE_TRANSFORMS[result] ?? DICE_TRANSFORMS[1];
-      setDiceTransform(transform);
-      diceValueEl.textContent =
-        result === 6
-          ? "Dobás: 6 – minden tét visszajár."
-          : `Dobás eredménye: ${result}`;
-      diceFinalTimeout = null;
-    }, 300);
+    const wobbleDuration = 900;
+    diceRollTimeout = window.setTimeout(() => {
+      diceEl.classList.remove("dice--rolling");
+      const randomTurnsX = (Math.floor(Math.random() * 6) + 2) * 90;
+      const randomTurnsY = (Math.floor(Math.random() * 6) + 2) * 90;
+      setDiceTransform(`rotateX(${randomTurnsX}deg) rotateY(${randomTurnsY}deg)`);
 
-    diceRollTimeout = null;
-  }, wobbleDuration);
+      diceFinalTimeout = window.setTimeout(() => {
+        const transform = DICE_TRANSFORMS[result] ?? DICE_TRANSFORMS[1];
+        setDiceTransform(transform);
+        diceValueEl.textContent =
+          result === 6
+            ? "Dobás: 6 – minden tét visszajár."
+            : `Dobás eredménye: ${result}`;
+        diceEl.classList.remove("dice--rolling");
+        diceFinalTimeout = null;
+        resolveDicePromise();
+      }, 300);
+
+      diceRollTimeout = null;
+    }, wobbleDuration);
+  });
+}
+
+function historyCardClass(card) {
+  if (!card || !card.suit) {
+    return "dice-history__card--joker";
+  }
+  return `dice-history__card--${card.suit}`;
+}
+
+function buildHistoryCard(card, isWinner) {
+  const cardEl = document.createElement("span");
+  cardEl.className = ["dice-history__card", historyCardClass(card)]
+    .filter(Boolean)
+    .join(" ");
+
+  const rankEl = document.createElement("strong");
+  const suitEl = document.createElement("span");
+
+  if (!card || !card.suit) {
+    rankEl.textContent = "J";
+    suitEl.textContent = "★";
+  } else {
+    rankEl.textContent = card.rank;
+    suitEl.textContent = cardSuitSymbol(card);
+  }
+
+  cardEl.append(rankEl, suitEl);
+
+  if (isWinner) {
+    cardEl.classList.add("dice-history__card--winner");
+  }
+
+  return cardEl;
+}
+
+function removeHistoryPlaceholder() {
+  if (diceHistoryEmpty && diceHistoryEmpty.parentElement) {
+    diceHistoryEmpty.remove();
+  }
+}
+
+function addDiceHistoryEntry(cards, dieResult, winningIndex) {
+  if (!diceHistoryList) return;
+  removeHistoryPlaceholder();
+  historyCounter += 1;
+
+  const item = document.createElement("li");
+  item.className = "dice-history__item";
+  if (dieResult === 6) {
+    item.classList.add("dice-history__item--push");
+  }
+
+  const header = document.createElement("div");
+  header.className = "dice-history__header";
+
+  const roundSpan = document.createElement("span");
+  roundSpan.className = "dice-history__round";
+  roundSpan.textContent = `#${historyCounter}`;
+
+  const rollSpan = document.createElement("span");
+  rollSpan.className = "dice-history__roll";
+  rollSpan.textContent =
+    dieResult === 6 ? "Dobás: 6 – minden tét visszajár." : `Dobás: ${dieResult}`;
+
+  header.append(roundSpan, rollSpan);
+
+  const cardsWrap = document.createElement("div");
+  cardsWrap.className = "dice-history__cards";
+
+  cards.forEach((card, index) => {
+    const isWinner = typeof winningIndex === "number" && index === winningIndex;
+    cardsWrap.appendChild(buildHistoryCard(card, isWinner));
+  });
+
+  item.append(header, cardsWrap);
+  diceHistoryList.prepend(item);
+
+  while (diceHistoryList.children.length > MAX_HISTORY_ITEMS) {
+    const last = diceHistoryList.lastElementChild;
+    if (!last) break;
+    diceHistoryList.removeChild(last);
+  }
 }
 
 function cardColor(card) {
