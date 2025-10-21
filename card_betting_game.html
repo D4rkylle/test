@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kártyás fogadási játék</title>
+    <link rel="stylesheet" href="css/card_betting_game.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Kártyás fogadási játék</h1>
+      <p>Helyezd el a zsetonokat a kívánt mezőre, majd kattints az Osztás gombra.</p>
+    </header>
+    <main class="app-layout">
+      <section class="bankroll-panel">
+        <div class="bankroll-row">
+          <span>Egyenleg:</span>
+          <strong id="bankroll-display">100.00</strong>
+        </div>
+        <div class="bankroll-row">
+          <span>Aktuális tét:</span>
+          <strong id="bet-total-display">0.00</strong>
+        </div>
+        <div class="chip-tray" aria-label="Zsetonválasztó">
+          <button class="chip" data-value="0.5">0.5</button>
+          <button class="chip" data-value="1">1</button>
+          <button class="chip" data-value="5">5</button>
+          <button class="chip" data-value="10">10</button>
+          <button class="chip" data-value="25">25</button>
+          <button class="chip" data-value="100">100</button>
+          <button class="chip" data-value="500">500</button>
+          <button class="chip" data-value="1000">1000</button>
+        </div>
+        <section class="stats-panel" aria-live="polite">
+          <h2>Statisztikák</h2>
+          <div class="stats-grid">
+            <div class="stats-block">
+              <h3>Összes kör</h3>
+              <p id="stats-rounds">0</p>
+            </div>
+            <div class="stats-block">
+              <h3>Leggyakoribb szín</h3>
+              <p id="stats-top-color">-</p>
+            </div>
+            <div class="stats-block">
+              <h3>Leggyakoribb szimbólum</h3>
+              <p id="stats-top-suit">-</p>
+            </div>
+            <div class="stats-block">
+              <h3>Leggyakoribb rang</h3>
+              <p id="stats-top-rank">-</p>
+            </div>
+          </div>
+          <div class="stats-section">
+            <h3>Színeloszlás</h3>
+            <ul>
+              <li>Piros: <span id="stats-color-red">0 (0%)</span></li>
+              <li>Fekete: <span id="stats-color-black">0 (0%)</span></li>
+              <li>Joker: <span id="stats-color-joker">0 (0%)</span></li>
+            </ul>
+          </div>
+          <div class="stats-section">
+            <h3>Szimbólumok</h3>
+            <ul class="suits-list">
+              <li>♥ Hearts: <span id="stats-suit-hearts">0 (0%)</span></li>
+              <li>♦ Diamonds: <span id="stats-suit-diamonds">0 (0%)</span></li>
+              <li>♣ Clubs: <span id="stats-suit-clubs">0 (0%)</span></li>
+              <li>♠ Spades: <span id="stats-suit-spades">0 (0%)</span></li>
+              <li>★ Joker: <span id="stats-suit-joker">0 (0%)</span></li>
+            </ul>
+          </div>
+          <div class="stats-section">
+            <h3>Kártyatípus</h3>
+            <ul>
+              <li>Szám (2-10): <span id="stats-type-number">0 (0%)</span></li>
+              <li>Figura (J-A): <span id="stats-type-face">0 (0%)</span></li>
+              <li>Joker: <span id="stats-type-joker">0 (0%)</span></li>
+            </ul>
+          </div>
+          <div class="stats-section">
+            <h3>Rangok</h3>
+            <div id="stats-ranks" class="stats-ranks"></div>
+          </div>
+        </section>
+        <button id="clear-all" class="secondary">Összes tét törlése</button>
+        <button id="deal-button" class="primary">Osztás</button>
+      </section>
+      <section class="table-panel">
+        <div class="table" role="region" aria-label="Fogadóasztal">
+          <div class="bet-group">
+            <h2>Szín</h2>
+            <div class="bet-grid two-cols">
+              <div class="bet-spot" data-bet-type="color" data-bet-key="red">
+                <button type="button">Piros<br /><span>1 : 1</span></button>
+                <div class="bet-amount" aria-live="polite"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="color" data-bet-key="black">
+                <button type="button">Fekete<br /><span>1 : 1</span></button>
+                <div class="bet-amount" aria-live="polite"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+            </div>
+          </div>
+          <div class="bet-group">
+            <h2>Szimbólum</h2>
+            <div class="bet-grid four-cols">
+              <div class="bet-spot" data-bet-type="suit" data-bet-key="hearts">
+                <button type="button">♥<br /><span>3 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="suit" data-bet-key="diamonds">
+                <button type="button">♦<br /><span>3 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="suit" data-bet-key="clubs">
+                <button type="button">♣<br /><span>3 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="suit" data-bet-key="spades">
+                <button type="button">♠<br /><span>3 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+            </div>
+          </div>
+          <div class="bet-group">
+            <h2>Kártyatípus</h2>
+            <div class="bet-grid two-cols">
+              <div class="bet-spot" data-bet-type="number" data-bet-key="number">
+                <button type="button">Szám (2-10)<br /><span>1 : 2</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="face" data-bet-key="face">
+                <button type="button">Betű (J-A)<br /><span>2 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+            </div>
+          </div>
+          <div class="bet-group">
+            <h2>Magasabb vagy alacsonyabb</h2>
+            <div class="bet-grid four-cols">
+              <div class="bet-spot" data-bet-type="high_low_seven" data-bet-key="higher">
+                <button type="button">7-nél magasabb<br /><span>1 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="high_low_seven" data-bet-key="lower">
+                <button type="button">7-nél alacsonyabb<br /><span>1 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="high_low_previous" data-bet-key="higher">
+                <button type="button">Előzőnél magasabb<br /><span>1 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="high_low_previous" data-bet-key="lower">
+                <button type="button">Előzőnél alacsonyabb<br /><span>1 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+            </div>
+          </div>
+          <div class="bet-group">
+            <h2>Konkrét lapérték</h2>
+            <div class="bet-grid rank-grid">
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="2">
+                <button type="button">2-es<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="3">
+                <button type="button">3-as<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="4">
+                <button type="button">4-es<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="5">
+                <button type="button">5-ös<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="6">
+                <button type="button">6-os<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="7">
+                <button type="button">7-es<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="8">
+                <button type="button">8-as<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="9">
+                <button type="button">9-es<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="10">
+                <button type="button">10-es<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="J">
+                <button type="button">J<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="Q">
+                <button type="button">Q<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="K">
+                <button type="button">K<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot bet-spot--compact" data-bet-type="rank_exact" data-bet-key="A">
+                <button type="button">A<br /><span>12 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+            </div>
+          </div>
+          <div class="bet-group">
+            <h2>Póker kombinációk</h2>
+            <div class="bet-grid six-cols">
+              <div class="bet-spot" data-bet-type="pair" data-bet-key="pair">
+                <button type="button">Pár<br /><span>1 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="drill" data-bet-key="drill">
+                <button type="button">Drill<br /><span>5 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="straight" data-bet-key="straight">
+                <button type="button">Sor<br /><span>10 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="flush" data-bet-key="flush">
+                <button type="button">Flush<br /><span>15 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="full_house" data-bet-key="full_house">
+                <button type="button">Full House<br /><span>20 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+              <div class="bet-spot" data-bet-type="poker" data-bet-key="poker">
+                <button type="button">Póker<br /><span>50 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+            </div>
+          </div>
+          <div class="bet-group">
+            <h2>Joker</h2>
+            <div class="bet-grid single-col">
+              <div class="bet-spot" data-bet-type="joker" data-bet-key="joker">
+                <button type="button">Joker<br /><span>25 : 1</span></button>
+                <div class="bet-amount"></div>
+                <button class="clear-spot" type="button" title="Tét törlése">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="results-panel">
+        <section class="results-cards" aria-live="polite">
+          <div class="results-cards__header">
+            <h2>Felfordított lapok</h2>
+          </div>
+          <div class="results-cards__body">
+            <div id="cards-container" class="cards-container"></div>
+          </div>
+        </section>
+        <section class="results-dice-bets">
+          <div class="dice-display">
+            <h3>Dobókocka</h3>
+            <div class="dice-display__current" tabindex="0">
+              <div id="dice-result" class="dice-result" aria-live="polite">
+                <div id="dice" class="dice" role="img" aria-label="Dobókocka">
+                  <div class="dice__cube">
+                    <div class="dice__face dice__face--1">
+                      <span class="dice__pip pip--center"></span>
+                    </div>
+                    <div class="dice__face dice__face--2">
+                      <span class="dice__pip pip--top-left"></span>
+                      <span class="dice__pip pip--bottom-right"></span>
+                    </div>
+                    <div class="dice__face dice__face--3">
+                      <span class="dice__pip pip--top-left"></span>
+                      <span class="dice__pip pip--center"></span>
+                      <span class="dice__pip pip--bottom-right"></span>
+                    </div>
+                    <div class="dice__face dice__face--4">
+                      <span class="dice__pip pip--top-left"></span>
+                      <span class="dice__pip pip--top-right"></span>
+                      <span class="dice__pip pip--bottom-left"></span>
+                      <span class="dice__pip pip--bottom-right"></span>
+                    </div>
+                    <div class="dice__face dice__face--5">
+                      <span class="dice__pip pip--top-left"></span>
+                      <span class="dice__pip pip--top-right"></span>
+                      <span class="dice__pip pip--center"></span>
+                      <span class="dice__pip pip--bottom-left"></span>
+                      <span class="dice__pip pip--bottom-right"></span>
+                    </div>
+                    <div class="dice__face dice__face--6">
+                      <span class="dice__pip pip--top-left"></span>
+                      <span class="dice__pip pip--top-right"></span>
+                      <span class="dice__pip pip--middle-left"></span>
+                      <span class="dice__pip pip--middle-right"></span>
+                      <span class="dice__pip pip--bottom-left"></span>
+                      <span class="dice__pip pip--bottom-right"></span>
+                    </div>
+                  </div>
+                </div>
+                <div id="dice-value" class="dice-value">Várakozás a dobásra…</div>
+              </div>
+            </div>
+          </div>
+          <div class="bet-breakdown">
+            <h3>Tétek eredményei</h3>
+            <ul id="bet-breakdown-list" class="bet-breakdown__list">
+              <li id="bet-breakdown-empty" class="bet-breakdown__empty">
+                A kör végén itt láthatod a tétek eredményeit.
+              </li>
+            </ul>
+          </div>
+        </section>
+        <section class="results-history">
+          <div class="dice-history">
+            <div class="dice-history__title">
+              <h4>Előző körök</h4>
+              <span class="dice-history__subtitle">Mind az öt lap és a dobás eredménye</span>
+            </div>
+            <ul id="dice-history-list" class="dice-history__list">
+              <li id="dice-history-empty" class="dice-history__empty">Még nincs előzmény.</li>
+            </ul>
+          </div>
+        </section>
+        <div class="log-panel" aria-live="polite">
+          <h2>Eredmények</h2>
+          <ul id="log"></ul>
+        </div>
+      </section>
+    </main>
+    <script src="js/card_betting_game.js"></script>
+  </body>
+</html>
