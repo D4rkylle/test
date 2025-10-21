@@ -29,6 +29,7 @@ let selectedChip = null;
 let currentBets = new Map();
 let roundLocked = false;
 let roundComplete = false;
+let cardElements = [];
 
 const audioState = {
   context: null,
@@ -137,6 +138,8 @@ const diceCubeEl = diceEl ? diceEl.querySelector(".dice__cube") : null;
 const diceValueEl = document.getElementById("dice-value");
 const diceHistoryList = document.getElementById("dice-history-list");
 const diceHistoryEmpty = document.getElementById("dice-history-empty");
+const betBreakdownList = document.getElementById("bet-breakdown-list");
+const betBreakdownEmpty = document.getElementById("bet-breakdown-empty");
 const dealButton = document.getElementById("deal-button");
 const clearAllButton = document.getElementById("clear-all");
 const chipButtons = Array.from(document.querySelectorAll(".chip"));
@@ -271,6 +274,77 @@ function resetLog() {
 
 function resetCards() {
   cardsContainer.innerHTML = "";
+  cardElements = [];
+}
+
+function showBetBreakdownPlaceholder(message) {
+  if (!betBreakdownList) return;
+  betBreakdownList.innerHTML = "";
+  if (betBreakdownEmpty) {
+    betBreakdownEmpty.textContent = message;
+    betBreakdownList.appendChild(betBreakdownEmpty);
+  } else {
+    const item = document.createElement("li");
+    item.className = "bet-breakdown__empty";
+    item.textContent = message;
+    betBreakdownList.appendChild(item);
+  }
+}
+
+function renderBetBreakdown(entries, { dieResult } = {}) {
+  if (!betBreakdownList) return;
+  betBreakdownList.innerHTML = "";
+  if (!entries.length) {
+    const message =
+      dieResult === 6
+        ? "Dobás: 6 – minden tét visszajár."
+        : "Nem volt tét ebben a körben.";
+    showBetBreakdownPlaceholder(message);
+    return;
+  }
+
+  entries.forEach((entry) => {
+    const item = document.createElement("li");
+    item.className = [
+      "bet-breakdown__item",
+      `bet-breakdown__item--${entry.status}`,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const icon = document.createElement("span");
+    icon.className = "bet-breakdown__icon";
+    icon.textContent = entry.status === "win" ? "✔" : entry.status === "push" ? "↺" : "✖";
+
+    const content = document.createElement("div");
+    content.className = "bet-breakdown__content";
+
+    const label = document.createElement("span");
+    label.className = "bet-breakdown__label";
+    label.textContent = entry.label;
+
+    const detail = document.createElement("span");
+    detail.className = "bet-breakdown__detail";
+
+    if (entry.status === "win") {
+      detail.textContent = `Nyereség: ${entry.profit.toFixed(2)} kredit (tét: ${entry.amount.toFixed(2)})`;
+    } else if (entry.status === "push") {
+      detail.textContent = `Tét vissza: ${entry.amount.toFixed(2)} kredit.`;
+    } else {
+      detail.textContent = `Elveszett tét: ${entry.amount.toFixed(2)} kredit.`;
+    }
+
+    content.append(label, detail);
+    item.append(icon, content);
+    betBreakdownList.appendChild(item);
+  });
+}
+
+function markWinningCard(index) {
+  cardElements.forEach((cardEl, cardIndex) => {
+    const isWinner = typeof index === "number" && cardIndex === index;
+    cardEl.classList.toggle("card--winner", isWinner);
+  });
 }
 
 function resolveDicePromise() {
@@ -466,6 +540,7 @@ function prepareNextRound() {
   resetCards();
   resetDice({ immediate: true });
   resetLog();
+  showBetBreakdownPlaceholder("A kör végén itt láthatod a tétek eredményeit.");
   clearAllBets();
   updateDisplays();
 }
@@ -475,6 +550,7 @@ async function startRound() {
   roundComplete = false;
   dealButton.disabled = true;
   dealButton.textContent = "Kör folyamatban…";
+  showBetBreakdownPlaceholder("Kör folyamatban…");
   const deck = buildDeck();
   shuffleDeck(deck);
   const cards = dealCards(deck, 5);
@@ -483,6 +559,7 @@ async function startRound() {
   const diceAnimation = displayDie(dieResult);
   const betEntries = Array.from(currentBets.entries());
   const totalWager = currentBetTotal;
+  const breakdownEntries = [];
   await diceAnimation;
 
   let winnings = 0;
@@ -491,16 +568,29 @@ async function startRound() {
   if (dieResult === 6) {
     winnings = totalWager;
     addLog("Dobás: 6 – minden tét visszajár.");
+    markWinningCard(null);
+    betEntries.forEach(([key, amount]) => {
+      const [betType, betKey] = key.split(":");
+      const label = describeBet(betType, betKey);
+      breakdownEntries.push({
+        status: "push",
+        label,
+        amount,
+        profit: amount,
+      });
+    });
   } else {
     winningIndex = dieResult - 1;
     const winningCard = cards[winningIndex];
     addLog(`Dobás: ${dieResult}.`);
     addLog(`Nyerő lap: #${dieResult} – ${describeCard(winningCard)}.`);
+    markWinningCard(winningIndex);
     recordWinningCard(winningCard);
     const pokerResults = evaluatePokerCombinations(cards);
 
     betEntries.forEach(([key, amount]) => {
       const [betType, betKey] = key.split(":");
+      const label = describeBet(betType, betKey);
       const outcome = resolveBet(
         betType,
         betKey,
@@ -511,18 +601,35 @@ async function startRound() {
       );
       if (outcome.type === "win") {
         winnings = roundCurrency(winnings + amount + outcome.profit);
-        addLog(
-          `✔ ${describeBet(betType, betKey)} nyert! Nyereség: ${outcome.profit.toFixed(2)} kredit.`,
-        );
+        breakdownEntries.push({
+          status: "win",
+          label,
+          amount,
+          profit: outcome.profit,
+        });
+        addLog(`✔ ${label} nyert! Nyereség: ${outcome.profit.toFixed(2)} kredit.`);
       } else if (outcome.type === "push") {
         winnings = roundCurrency(winnings + amount);
-        addLog(`↺ ${describeBet(betType, betKey)} push. A tét visszajár.`);
+        breakdownEntries.push({
+          status: "push",
+          label,
+          amount,
+          profit: amount,
+        });
+        addLog(`↺ ${label} push. A tét visszajár.`);
       } else {
-        addLog(`✖ ${describeBet(betType, betKey)} veszített.`);
+        breakdownEntries.push({
+          status: "loss",
+          label,
+          amount,
+          profit: 0,
+        });
+        addLog(`✖ ${label} veszített.`);
       }
     });
   }
 
+  renderBetBreakdown(breakdownEntries, { dieResult });
   bankroll = roundCurrency(bankroll - totalWager + winnings);
   const netGain = roundCurrency(winnings - totalWager);
   if (netGain > 0) {
@@ -575,6 +682,7 @@ function displayCards(cards) {
   cards.forEach((card, index) => {
     const cardEl = buildCardElement(card, index);
     cardsContainer.appendChild(cardEl);
+    cardElements.push(cardEl);
     requestAnimationFrame(() => {
       setTimeout(() => {
         playSound("deal");

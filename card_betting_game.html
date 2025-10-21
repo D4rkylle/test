@@ -216,60 +216,76 @@
       </section>
       <section class="results-panel">
         <div class="cards-display" aria-live="polite">
-          <h2>Felfordított lapok</h2>
-          <div id="cards-container" class="cards-container"></div>
-          <div class="dice-display">
-            <h3>Dobókocka</h3>
-            <div class="dice-display__current" tabindex="0">
-              <div id="dice-result" class="dice-result" aria-live="polite">
-                <div id="dice" class="dice" role="img" aria-label="Dobókocka">
-                  <div class="dice__cube">
-                    <div class="dice__face dice__face--1">
-                      <span class="dice__pip pip--center"></span>
-                    </div>
-                    <div class="dice__face dice__face--2">
-                      <span class="dice__pip pip--top-left"></span>
-                      <span class="dice__pip pip--bottom-right"></span>
-                    </div>
-                    <div class="dice__face dice__face--3">
-                      <span class="dice__pip pip--top-left"></span>
-                      <span class="dice__pip pip--center"></span>
-                      <span class="dice__pip pip--bottom-right"></span>
-                    </div>
-                    <div class="dice__face dice__face--4">
-                      <span class="dice__pip pip--top-left"></span>
-                      <span class="dice__pip pip--top-right"></span>
-                      <span class="dice__pip pip--bottom-left"></span>
-                      <span class="dice__pip pip--bottom-right"></span>
-                    </div>
-                    <div class="dice__face dice__face--5">
-                      <span class="dice__pip pip--top-left"></span>
-                      <span class="dice__pip pip--top-right"></span>
-                      <span class="dice__pip pip--center"></span>
-                      <span class="dice__pip pip--bottom-left"></span>
-                      <span class="dice__pip pip--bottom-right"></span>
-                    </div>
-                    <div class="dice__face dice__face--6">
-                      <span class="dice__pip pip--top-left"></span>
-                      <span class="dice__pip pip--top-right"></span>
-                      <span class="dice__pip pip--middle-left"></span>
-                      <span class="dice__pip pip--middle-right"></span>
-                      <span class="dice__pip pip--bottom-left"></span>
-                      <span class="dice__pip pip--bottom-right"></span>
-                    </div>
-                  </div>
-                </div>
-                <div id="dice-value" class="dice-value">Várakozás a dobásra…</div>
+          <div class="cards-display__header">
+            <h2>Felfordított lapok</h2>
+          </div>
+          <div class="cards-display__grid">
+            <div class="cards-display__left">
+              <div id="cards-container" class="cards-container"></div>
+              <div class="bet-breakdown">
+                <h3>Tétek eredményei</h3>
+                <ul id="bet-breakdown-list" class="bet-breakdown__list">
+                  <li id="bet-breakdown-empty" class="bet-breakdown__empty">
+                    A kör végén itt láthatod a tétek eredményeit.
+                  </li>
+                </ul>
               </div>
             </div>
-            <div class="dice-history">
-              <div class="dice-history__title">
-                <h4>Előző körök</h4>
-                <span class="dice-history__subtitle">Mind az öt lap és a dobás eredménye</span>
+            <div class="cards-display__right">
+              <div class="dice-display">
+                <h3>Dobókocka</h3>
+                <div class="dice-display__current" tabindex="0">
+                  <div id="dice-result" class="dice-result" aria-live="polite">
+                    <div id="dice" class="dice" role="img" aria-label="Dobókocka">
+                      <div class="dice__cube">
+                        <div class="dice__face dice__face--1">
+                          <span class="dice__pip pip--center"></span>
+                        </div>
+                        <div class="dice__face dice__face--2">
+                          <span class="dice__pip pip--top-left"></span>
+                          <span class="dice__pip pip--bottom-right"></span>
+                        </div>
+                        <div class="dice__face dice__face--3">
+                          <span class="dice__pip pip--top-left"></span>
+                          <span class="dice__pip pip--center"></span>
+                          <span class="dice__pip pip--bottom-right"></span>
+                        </div>
+                        <div class="dice__face dice__face--4">
+                          <span class="dice__pip pip--top-left"></span>
+                          <span class="dice__pip pip--top-right"></span>
+                          <span class="dice__pip pip--bottom-left"></span>
+                          <span class="dice__pip pip--bottom-right"></span>
+                        </div>
+                        <div class="dice__face dice__face--5">
+                          <span class="dice__pip pip--top-left"></span>
+                          <span class="dice__pip pip--top-right"></span>
+                          <span class="dice__pip pip--center"></span>
+                          <span class="dice__pip pip--bottom-left"></span>
+                          <span class="dice__pip pip--bottom-right"></span>
+                        </div>
+                        <div class="dice__face dice__face--6">
+                          <span class="dice__pip pip--top-left"></span>
+                          <span class="dice__pip pip--top-right"></span>
+                          <span class="dice__pip pip--middle-left"></span>
+                          <span class="dice__pip pip--middle-right"></span>
+                          <span class="dice__pip pip--bottom-left"></span>
+                          <span class="dice__pip pip--bottom-right"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="dice-value" class="dice-value">Várakozás a dobásra…</div>
+                  </div>
+                </div>
               </div>
-              <ul id="dice-history-list" class="dice-history__list">
-                <li id="dice-history-empty" class="dice-history__empty">Még nincs előzmény.</li>
-              </ul>
+              <div class="dice-history">
+                <div class="dice-history__title">
+                  <h4>Előző körök</h4>
+                  <span class="dice-history__subtitle">Mind az öt lap és a dobás eredménye</span>
+                </div>
+                <ul id="dice-history-list" class="dice-history__list">
+                  <li id="dice-history-empty" class="dice-history__empty">Még nincs előzmény.</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
