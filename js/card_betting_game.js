@@ -175,7 +175,7 @@ let diceRollTimeout = null;
 let diceFinalTimeout = null;
 let dicePendingResolver = null;
 let historyCounter = 0;
-const MAX_HISTORY_ITEMS = 15;
+const MAX_HISTORY_ITEMS = 6;
 
 const PIP_LAYOUTS = {
   A: [[3, 2]],
