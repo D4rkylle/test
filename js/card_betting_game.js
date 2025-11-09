@@ -553,6 +553,19 @@ const I18N_STRINGS = {
     "results.betOutcomePlaceholder":
       "A kör végén itt láthatod a tétek eredményeit.",
     "results.logTitle": "Eredmények",
+    "results.summary.cardLabel": "Nyerő lap",
+    "results.summary.handLabel": "Póker kombináció",
+    "results.summary.outcomeLabel": "Kör eredménye",
+    "results.summary.cardPending": "Várakozás…",
+    "results.summary.cardNone": "—",
+    "results.summary.cardPush": "Dobás: 6 – push",
+    "results.summary.handPending": "Várakozás…",
+    "results.summary.handNone": "Nincs kombináció",
+    "results.summary.outcome.pending": "Várakozás…",
+    "results.summary.outcome.win": "Nyert",
+    "results.summary.outcome.loss": "Vesztett",
+    "results.summary.outcome.push": "Push",
+    "results.summary.outcome.breakEven": "Egyenleg változatlan",
     "history.title": "Előző körök",
     "history.subtitle": "Mind az öt lap és a dobás eredménye",
     "history.empty": "Még nincs előzmény.",
@@ -855,6 +868,19 @@ const I18N_STRINGS = {
     "results.betOutcomePlaceholder":
       "Bet outcomes will appear here at the end of the round.",
     "results.logTitle": "Game log",
+    "results.summary.cardLabel": "Winning card",
+    "results.summary.handLabel": "Poker hand",
+    "results.summary.outcomeLabel": "Round result",
+    "results.summary.cardPending": "Waiting…",
+    "results.summary.cardNone": "—",
+    "results.summary.cardPush": "Roll: 6 – push",
+    "results.summary.handPending": "Waiting…",
+    "results.summary.handNone": "No combination",
+    "results.summary.outcome.pending": "Waiting…",
+    "results.summary.outcome.win": "Won",
+    "results.summary.outcome.loss": "Lost",
+    "results.summary.outcome.push": "Push",
+    "results.summary.outcome.breakEven": "Balance unchanged",
     "history.title": "Previous rounds",
     "history.subtitle": "All five cards and the dice result",
     "history.empty": "No history yet.",
@@ -1157,6 +1183,19 @@ const I18N_STRINGS = {
     "results.betOutcomePlaceholder":
       "Nach der Runde erscheinen hier die Ergebnisse.",
     "results.logTitle": "Protokoll",
+    "results.summary.cardLabel": "Gewinnende Karte",
+    "results.summary.handLabel": "Pokerhand",
+    "results.summary.outcomeLabel": "Rundenergebnis",
+    "results.summary.cardPending": "Warten…",
+    "results.summary.cardNone": "—",
+    "results.summary.cardPush": "Wurf: 6 – Push",
+    "results.summary.handPending": "Warten…",
+    "results.summary.handNone": "Keine Kombination",
+    "results.summary.outcome.pending": "Warten…",
+    "results.summary.outcome.win": "Gewonnen",
+    "results.summary.outcome.loss": "Verloren",
+    "results.summary.outcome.push": "Push",
+    "results.summary.outcome.breakEven": "Gleichstand",
     "history.title": "Vorherige Runden",
     "history.subtitle": "Alle fünf Karten und das Würfelergebnis",
     "history.empty": "Noch keine Einträge.",
@@ -1464,6 +1503,11 @@ const diceCubeEl = diceEl ? diceEl.querySelector(".dice__cube") : null;
 const diceValueEl = document.getElementById("dice-value");
 const diceHistoryList = document.getElementById("dice-history-list");
 const betBreakdownList = document.getElementById("bet-breakdown-list");
+const resultsSummarySection = document.getElementById("results-summary");
+const resultsSummaryCardEl = document.getElementById("results-summary-card");
+const resultsSummaryHandEl = document.getElementById("results-summary-hand");
+const resultsSummaryOutcomeEl = document.getElementById("results-summary-outcome");
+const resultsSummaryAmountEl = document.getElementById("results-summary-amount");
 const dealButton = document.getElementById("deal-button");
 const clearAllButton = document.getElementById("clear-all");
 const repeatBetButton = document.getElementById("repeat-bet");
@@ -1588,8 +1632,17 @@ let betBreakdownState = {
 };
 let diceValueState = { key: DEFAULT_DICE_TEXT_KEY, params: {} };
 let dealButtonLabelKey = "actions.deal";
+let resultsSummaryState = {
+  status: "idle",
+  winningCard: null,
+  pokerHandKey: null,
+  outcome: "pending",
+  amount: 0,
+  resolutionType: null,
+};
 
 initializeBetVisuals();
+resetResultsSummaryState();
 
 const PIP_LAYOUTS = {
   A: [[3, 2]],
@@ -1665,6 +1718,30 @@ const PIP_LAYOUTS = {
     [2, 1],
     [4, 3],
   ],
+};
+
+const POKER_HAND_PRIORITY = [
+  "royal_flush",
+  "straight_flush",
+  "poker",
+  "full_house",
+  "flush",
+  "straight",
+  "drill",
+  "two_pair",
+  "pair",
+];
+
+const POKER_HAND_LABEL_MAP = {
+  royal_flush: "bets.describe.royal_flush.royal_flush",
+  straight_flush: "bets.describe.straight_flush.straight_flush",
+  poker: "bets.describe.poker.poker",
+  full_house: "bets.describe.full_house.full_house",
+  flush: "bets.describe.flush.flush",
+  straight: "bets.describe.straight.straight",
+  drill: "bets.describe.drill.drill",
+  two_pair: "bets.describe.two_pair.two_pair",
+  pair: "bets.describe.pair.pair",
 };
 
 function roundCurrency(value) {
@@ -1979,6 +2056,151 @@ function renderBetBreakdown(entries, { resolution, winningSpots = [] } = {}) {
   }
 
   applyBetSpotResults({ winningSpots });
+}
+
+function determineBestPokerHandKey(pokerResults) {
+  if (!pokerResults) return null;
+  return POKER_HAND_PRIORITY.find((key) => pokerResults[key]) || null;
+}
+
+function resetResultsSummaryState() {
+  resultsSummaryState = {
+    status: "idle",
+    winningCard: null,
+    pokerHandKey: null,
+    outcome: "pending",
+    amount: 0,
+    resolutionType: null,
+  };
+  updateResultsSummaryDisplay();
+}
+
+function setResultsSummaryPending() {
+  resultsSummaryState = {
+    status: "pending",
+    winningCard: null,
+    pokerHandKey: null,
+    outcome: "pending",
+    amount: 0,
+    resolutionType: null,
+  };
+  updateResultsSummaryDisplay();
+}
+
+function setResultsSummaryResolved({
+  winningCard,
+  pokerHandKey,
+  outcome,
+  amount,
+  resolutionType,
+}) {
+  resultsSummaryState = {
+    status: "resolved",
+    winningCard: cloneCard(winningCard),
+    pokerHandKey: pokerHandKey || null,
+    outcome: outcome || "pending",
+    amount: roundCurrency(Number.isFinite(amount) ? amount : 0),
+    resolutionType: resolutionType || null,
+  };
+  updateResultsSummaryDisplay();
+}
+
+function updateResultsSummaryDisplay() {
+  if (!resultsSummarySection) {
+    return;
+  }
+
+  const summaryClasses = [
+    "results-summary--win",
+    "results-summary--loss",
+    "results-summary--push",
+  ];
+  resultsSummarySection.classList.remove(...summaryClasses);
+  if (resultsSummaryAmountEl) {
+    resultsSummaryAmountEl.classList.remove(
+      "results-summary__delta--win",
+      "results-summary__delta--loss",
+      "results-summary__delta--push",
+    );
+  }
+
+  const state = resultsSummaryState || {};
+
+  if (resultsSummaryCardEl) {
+    let cardText;
+    if (state.status === "resolved") {
+      if (state.resolutionType === "push") {
+        cardText = t("results.summary.cardPush");
+      } else if (state.winningCard) {
+        cardText = describeCard(state.winningCard);
+      } else {
+        cardText = t("results.summary.cardNone");
+      }
+    } else {
+      cardText = t("results.summary.cardPending");
+    }
+    resultsSummaryCardEl.textContent = cardText;
+  }
+
+  if (resultsSummaryHandEl) {
+    let handText;
+    if (state.status === "resolved") {
+      if (state.pokerHandKey && POKER_HAND_LABEL_MAP[state.pokerHandKey]) {
+        handText = t(POKER_HAND_LABEL_MAP[state.pokerHandKey]);
+      } else if (state.pokerHandKey) {
+        handText = state.pokerHandKey;
+      } else {
+        handText = t("results.summary.handNone");
+      }
+    } else {
+      handText = t("results.summary.handPending");
+    }
+    resultsSummaryHandEl.textContent = handText;
+  }
+
+  let amountText = formatCurrencyWithSign(0);
+  let outcomeKey = "results.summary.outcome.pending";
+  let deltaClass = null;
+  let summaryClass = null;
+
+  if (state.status === "resolved") {
+    switch (state.outcome) {
+      case "win":
+        outcomeKey = "results.summary.outcome.win";
+        deltaClass = "results-summary__delta--win";
+        summaryClass = "results-summary--win";
+        break;
+      case "loss":
+        outcomeKey = "results.summary.outcome.loss";
+        deltaClass = "results-summary__delta--loss";
+        summaryClass = "results-summary--loss";
+        break;
+      case "push":
+        outcomeKey = "results.summary.outcome.push";
+        deltaClass = "results-summary__delta--push";
+        summaryClass = "results-summary--push";
+        break;
+      default:
+        outcomeKey = "results.summary.outcome.breakEven";
+        deltaClass = "results-summary__delta--push";
+        summaryClass = "results-summary--push";
+        break;
+    }
+    amountText = formatCurrencyWithSign(state.amount);
+  }
+
+  if (resultsSummaryOutcomeEl) {
+    resultsSummaryOutcomeEl.textContent = t(outcomeKey);
+  }
+  if (resultsSummaryAmountEl) {
+    resultsSummaryAmountEl.textContent = amountText;
+    if (deltaClass) {
+      resultsSummaryAmountEl.classList.add(deltaClass);
+    }
+  }
+  if (summaryClass) {
+    resultsSummarySection.classList.add(summaryClass);
+  }
 }
 
 function setDealButtonLabel(key) {
@@ -2727,7 +2949,11 @@ function updateWinningCardHints() {
     placeholder.className = "winning-hints__empty";
     placeholder.textContent = t("winningHints.placeholder");
     winningHintsBody.appendChild(placeholder);
+    if (winningHintsPanel) {
+      winningHintsPanel.classList.add("winning-hints--compact");
+    }
     setWinningHintsBarVisibility(true);
+    refreshWinningHintsOffset();
     return;
   }
 
@@ -2784,10 +3010,17 @@ function updateWinningCardHints() {
     empty.className = "winning-hints__empty";
     empty.textContent = t("winningHints.none");
     winningHintsBody.appendChild(empty);
+    if (winningHintsPanel) {
+      winningHintsPanel.classList.add("winning-hints--compact");
+    }
     setWinningHintsBarVisibility(true);
+    refreshWinningHintsOffset();
     return;
   }
 
+  if (winningHintsPanel) {
+    winningHintsPanel.classList.remove("winning-hints--compact");
+  }
   hints.sort((a, b) => b.payout - a.payout);
 
   const list = document.createElement("ul");
@@ -2828,6 +3061,7 @@ function updateWinningCardHints() {
 
   winningHintsBody.appendChild(list);
   setWinningHintsBarVisibility(true);
+  refreshWinningHintsOffset();
 }
 
 function setWinningHintsEnabled(enabled, { persist = false } = {}) {
@@ -2850,6 +3084,9 @@ function setWinningHintsEnabled(enabled, { persist = false } = {}) {
   document.body.classList.toggle("hide-winning-hints", !winningHintsEnabled);
   if (!winningHintsEnabled) {
     setWinningHintsBarVisibility(false);
+    if (winningHintsPanel) {
+      winningHintsPanel.classList.remove("winning-hints--compact");
+    }
   }
   updateWinningCardHints();
 }
@@ -2880,6 +3117,27 @@ function setWinningHintsBarVisibility(visible) {
   }
   winningHintsBarActive = shouldShow;
   document.body.classList.toggle("winning-hints-bar-visible", shouldShow);
+  if (shouldShow) {
+    refreshWinningHintsOffset();
+  } else {
+    document.body.style.setProperty("--winning-hints-offset", "0px");
+  }
+}
+
+function updateWinningHintsOffset() {
+  if (!winningHintsPanel) return;
+  const height = winningHintsPanel.offsetHeight;
+  const offset = Math.ceil(height + 24);
+  document.body.style.setProperty("--winning-hints-offset", `${offset}px`);
+}
+
+function refreshWinningHintsOffset() {
+  if (!winningHintsBarActive || !winningHintsPanel) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    updateWinningHintsOffset();
+  });
 }
 
 function launchConfetti() {
@@ -3485,9 +3743,16 @@ if (dealButton) {
   });
 }
 
+window.addEventListener("resize", () => {
+  if (winningHintsBarActive) {
+    refreshWinningHintsOffset();
+  }
+});
+
 function prepareNextRound() {
   clearAutoResetTimer();
   hideWinPopup(true);
+  resetResultsSummaryState();
   roundLocked = false;
   roundComplete = false;
   if (dealButton) {
@@ -3513,6 +3778,7 @@ async function startRound() {
   }
   setDealButtonLabel("actions.dealing");
   setBetBreakdownPlaceholder("round.inProgress");
+  setResultsSummaryPending();
   updateBetToolAvailability();
   const previousWinningCard = lastWinningCard;
   const deck = buildDeck();
@@ -3745,6 +4011,24 @@ async function startRound() {
   bankroll = roundCurrency(bankroll - totalWager + winnings);
   const netGain = roundCurrency(winnings - totalWager);
   const totalWinningPayout = roundCurrency(winningPayoutTotal);
+  const summaryWinningCard =
+    typeof resolvedWinningIndex === "number" ? cards[resolvedWinningIndex] : null;
+  const summaryPokerKey = determineBestPokerHandKey(pokerResults);
+  const summaryOutcome =
+    resolution.type === "push"
+      ? "push"
+      : netGain > 0
+      ? "win"
+      : netGain < 0
+      ? "loss"
+      : "breakEven";
+  setResultsSummaryResolved({
+    winningCard: summaryWinningCard,
+    pokerHandKey: summaryPokerKey,
+    outcome: summaryOutcome,
+    amount: netGain,
+    resolutionType: resolution.type,
+  });
   if (netGain > 0 && totalWinningPayout > 0) {
     playSound("win");
     showWinPopup(totalWinningPayout);
@@ -4797,6 +5081,7 @@ function applyTranslations() {
   renderDiceHistory();
   renderFullHistory();
   updateWinningCardHints();
+  updateResultsSummaryDisplay();
   updateAudioUI();
   updateBetToolAvailability();
 }

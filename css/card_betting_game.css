@@ -44,6 +44,7 @@ body {
   background: var(--felt-gradient);
   color: var(--text-primary);
   overflow: hidden;
+  --winning-hints-offset: 0px;
 }
 
 body.felt-theme-emerald {
@@ -1136,19 +1137,19 @@ body.settings-open {
 
 .app-layout {
   width: 100%;
-  max-width: min(1680px, 96vw);
-  margin: 0 auto;
+  max-width: min(1920px, 98vw);
+  margin: 0;
   display: grid;
-  grid-template-columns: clamp(260px, 18vw, 320px) minmax(520px, 1fr)
-    clamp(440px, 30vw, 620px);
-  gap: clamp(1rem, 2.1vw, 1.5rem);
-  padding: clamp(0.6rem, 1.2vh, 0.9rem)
-    clamp(0.75rem, 1.8vw, 1.6rem)
-    clamp(0.85rem, 1.6vh, 1.1rem) 0;
+  grid-template-columns: clamp(280px, 22vw, 360px) minmax(640px, 1fr)
+    clamp(520px, 32vw, 720px);
+  gap: clamp(1.1rem, 2.4vw, 1.8rem);
+  padding: clamp(0.55rem, 1.1vh, 0.85rem)
+    clamp(0.7rem, 1.7vw, 1.45rem)
+    clamp(0.8rem, 1.5vh, 1.1rem) 0;
   box-sizing: border-box;
-  height: 100%;
+  height: auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   flex: 1 1 auto;
   align-self: stretch;
   align-items: stretch;
@@ -1165,7 +1166,7 @@ body.settings-open {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+  height: auto;
 }
 
 .bankroll-panel {
@@ -1173,9 +1174,13 @@ body.settings-open {
   grid-template-rows: repeat(2, auto) auto auto;
   gap: clamp(0.75rem, 1.4vh, 1rem);
   max-height: 100%;
-  height: 100%;
+  height: auto;
   min-height: 0;
   align-content: start;
+}
+
+.results-panel {
+  gap: clamp(0.75rem, 1.5vh, 1.15rem);
 }
 
 .bankroll-card {
@@ -2120,9 +2125,9 @@ body.chip-style-neon .bet-chip::after {
 
 .results-panel {
   display: grid;
-  grid-template-rows: auto auto auto 1fr;
-  gap: clamp(0.75rem, 1.2vh, 0.95rem);
-  height: 100%;
+  grid-template-rows: auto auto auto auto 1fr;
+  gap: clamp(0.85rem, 1.5vh, 1.15rem);
+  height: auto;
   min-height: 0;
 }
 
@@ -2135,6 +2140,108 @@ body.chip-style-neon .bet-chip::after {
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 22px rgba(0, 0, 0, 0.35);
   min-height: 0;
+}
+
+.results-summary {
+  border-radius: 1rem;
+  padding: clamp(0.75rem, 1.3vh, 1.05rem) clamp(0.9rem, 1.8vw, 1.4rem);
+  background: var(--surface-panel-strong);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 26px rgba(0, 0, 0, 0.38);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.65rem, 1vw, 0.95rem);
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.results-summary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 14% 18%,
+    rgba(255, 255, 255, 0.16),
+    transparent 55%
+  );
+  opacity: 0.65;
+}
+
+.results-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.results-summary__label {
+  font-size: clamp(0.72rem, 1vw, 0.82rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.results-summary__value {
+  font-size: clamp(1.1rem, 1.9vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text-emphasis);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
+  white-space: normal;
+}
+
+.results-summary__item--outcome {
+  align-items: flex-start;
+}
+
+.results-summary__delta {
+  font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.results-summary__delta--win {
+  color: #8ff7c0;
+}
+
+.results-summary__delta--loss {
+  color: #ff9f9a;
+}
+
+.results-summary__delta--push {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.results-summary--win {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 16px 32px rgba(12, 110, 38, 0.45);
+}
+
+.results-summary--loss {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 16px 32px rgba(130, 12, 12, 0.45);
+}
+
+.results-summary--push {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 16px 32px rgba(20, 40, 68, 0.45);
+}
+
+@media (max-width: 1280px) {
+  .results-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .results-summary {
+    grid-template-columns: 1fr;
+  }
 }
 
 .results-cards {
@@ -2290,7 +2397,12 @@ body.chip-style-neon .bet-chip::after {
   opacity: 0;
   pointer-events: none;
   z-index: 160;
-  max-height: clamp(170px, 28vh, 230px);
+  max-height: clamp(150px, 24vh, 200px);
+}
+
+.winning-hints.winning-hints--compact {
+  max-height: clamp(110px, 18vh, 150px);
+  padding: clamp(0.6rem, 1.2vh, 0.95rem) clamp(0.85rem, 2.6vw, 1.6rem);
 }
 
 .winning-hints__header h2 {
@@ -2396,7 +2508,15 @@ body.winning-hints-bar-visible .winning-hints {
 }
 
 body.winning-hints-bar-visible .app-layout {
-  padding-bottom: clamp(180px, 30vh, 260px);
+  padding-bottom: calc(
+    clamp(0.85rem, 1.4vh, 1.05rem) + var(--winning-hints-offset, 160px)
+  );
+}
+
+body.winning-hints-bar-visible .results-panel,
+body.winning-hints-bar-visible .table-panel,
+body.winning-hints-bar-visible .bankroll-panel {
+  margin-bottom: calc(var(--winning-hints-offset, 0px) + clamp(0.4rem, 0.9vh, 0.7rem));
 }
 
 
