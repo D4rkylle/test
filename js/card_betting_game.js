@@ -569,6 +569,8 @@ const I18N_STRINGS = {
     "history.title": "Előző körök",
     "history.subtitle": "Mind az öt lap és a dobás eredménye",
     "history.empty": "Még nincs előzmény.",
+    "history.summary.winsTitle": "Nyertes tétek",
+    "history.summary.noWins": "Nem volt nyertes tét.",
     "history.open": "Előzmények megnyitása",
     "history.modalTitle": "Teljes előzmények",
     "history.close": "Előzmények bezárása",
@@ -884,6 +886,8 @@ const I18N_STRINGS = {
     "history.title": "Previous rounds",
     "history.subtitle": "All five cards and the dice result",
     "history.empty": "No history yet.",
+    "history.summary.winsTitle": "Winning bets",
+    "history.summary.noWins": "No winning bets.",
     "history.open": "Open history",
     "history.modalTitle": "Full history",
     "history.close": "Close history",
@@ -1199,6 +1203,8 @@ const I18N_STRINGS = {
     "history.title": "Vorherige Runden",
     "history.subtitle": "Alle fünf Karten und das Würfelergebnis",
     "history.empty": "Noch keine Einträge.",
+    "history.summary.winsTitle": "Gewinnwetten",
+    "history.summary.noWins": "Keine Gewinnwetten.",
     "history.open": "Historie öffnen",
     "history.modalTitle": "Gesamte Historie",
     "history.close": "Historie schließen",
@@ -4022,6 +4028,21 @@ async function startRound() {
       : netGain < 0
       ? "loss"
       : "breakEven";
+  const historyWins = breakdownEntries
+    .filter((entry) => entry.status === "win")
+    .map((entry) => ({
+      betType: entry.betType,
+      betKey: entry.betKey,
+      payout: entry.payout,
+    }));
+  const roundHistorySummary = {
+    winningCard: summaryWinningCard ? cloneCard(summaryWinningCard) : null,
+    pokerHandKey: summaryPokerKey || null,
+    outcome: summaryOutcome,
+    amount: netGain,
+    resolutionType: resolution.type || null,
+    wins: historyWins,
+  };
   setResultsSummaryResolved({
     winningCard: summaryWinningCard,
     pokerHandKey: summaryPokerKey,
@@ -4041,7 +4062,7 @@ async function startRound() {
 
   resolution.winningIndex =
     typeof resolution.winningIndex === "number" ? resolution.winningIndex : winningIndex;
-  addDiceHistoryEntry(cards, resolution);
+  addDiceHistoryEntry(cards, resolution, roundHistorySummary);
 
   applyHighLowPreviousReference(winningCardForNextRound);
 
@@ -4509,6 +4530,152 @@ function buildHistoryCard(card, isWinner) {
   return cardEl;
 }
 
+function normalizeHistoryOutcome(outcome) {
+  switch (outcome) {
+    case "win":
+      return "win";
+    case "loss":
+      return "loss";
+    default:
+      return "push";
+  }
+}
+
+function formatHistorySummary(summary) {
+  if (!summary) {
+    return null;
+  }
+  const outcomeClass = normalizeHistoryOutcome(summary.outcome);
+  let cardText;
+  if (summary.resolutionType === "push") {
+    cardText = t("results.summary.cardPush");
+  } else if (summary.winningCard) {
+    cardText = describeCard(summary.winningCard);
+  } else {
+    cardText = t("results.summary.cardNone");
+  }
+
+  let handText = t("results.summary.handNone");
+  if (summary.pokerHandKey) {
+    const labelKey = POKER_HAND_LABEL_MAP[summary.pokerHandKey];
+    if (labelKey) {
+      handText = t(labelKey);
+    } else {
+      handText = summary.pokerHandKey;
+    }
+  }
+
+  const outcomeKey = summary.outcome
+    ? `results.summary.outcome.${summary.outcome}`
+    : "results.summary.outcome.pending";
+  const outcomeText = t(outcomeKey);
+
+  const amountValue = Number.isFinite(summary.amount) ? summary.amount : 0;
+  const amountText = formatCurrencyWithSign(amountValue);
+
+  const wins = Array.isArray(summary.wins)
+    ? summary.wins.map((win) => ({
+        betType: win.betType,
+        betKey: win.betKey,
+        payout: Number.isFinite(win.payout) ? win.payout : 0,
+      }))
+    : [];
+
+  return {
+    cardText,
+    handText,
+    outcomeText,
+    amountText,
+    outcomeClass,
+    wins,
+  };
+}
+
+function buildHistorySummaryRow(summaryData, baseClass) {
+  if (!summaryData) {
+    return null;
+  }
+  const container = document.createElement("div");
+  container.className = `${baseClass}__summary`;
+
+  function createItem(labelText, valueText, extraNode) {
+    const item = document.createElement("div");
+    item.className = `${baseClass}__summary-item`;
+    const label = document.createElement("span");
+    label.className = `${baseClass}__summary-label`;
+    label.textContent = labelText;
+    const value = document.createElement("span");
+    value.className = `${baseClass}__summary-value`;
+    value.append(document.createTextNode(valueText));
+    if (extraNode) {
+      value.append(extraNode);
+    }
+    item.append(label, value);
+    return item;
+  }
+
+  const cardItem = createItem(t("results.summary.cardLabel"), summaryData.cardText);
+  const handItem = createItem(t("results.summary.handLabel"), summaryData.handText);
+
+  const deltaBase = `${baseClass}__delta`;
+  const delta = document.createElement("span");
+  delta.className = `${deltaBase} ${deltaBase}--${summaryData.outcomeClass}`;
+  delta.textContent = summaryData.amountText;
+
+  const outcomeItem = createItem(
+    t("results.summary.outcomeLabel"),
+    summaryData.outcomeText,
+    delta,
+  );
+  outcomeItem.classList.add(`${baseClass}__summary-item--outcome`);
+
+  container.append(cardItem, handItem, outcomeItem);
+  return container;
+}
+
+function buildHistoryWinsBlock(summaryData, baseClass) {
+  if (!summaryData) {
+    return null;
+  }
+
+  const container = document.createElement("div");
+  container.className = `${baseClass}__wins`;
+
+  const title = document.createElement("span");
+  title.className = `${baseClass}__wins-title`;
+  title.textContent = t("history.summary.winsTitle");
+  container.appendChild(title);
+
+  if (!summaryData.wins.length) {
+    const empty = document.createElement("div");
+    empty.className = `${baseClass}__wins-empty`;
+    empty.textContent = t("history.summary.noWins");
+    container.appendChild(empty);
+    return container;
+  }
+
+  const list = document.createElement("ul");
+  list.className = `${baseClass}__wins-list`;
+  summaryData.wins.forEach((win) => {
+    const listItem = document.createElement("li");
+    listItem.className = `${baseClass}__win`;
+
+    const label = document.createElement("span");
+    label.className = `${baseClass}__win-label`;
+    label.textContent = describeBet(win.betType, win.betKey);
+
+    const amount = document.createElement("span");
+    amount.className = `${baseClass}__win-amount`;
+    amount.textContent = formatCurrencyWithSign(win.payout);
+
+    listItem.append(label, amount);
+    list.appendChild(listItem);
+  });
+
+  container.appendChild(list);
+  return container;
+}
+
 function renderDiceHistory() {
   if (!diceHistoryList) return;
   diceHistoryList.innerHTML = "";
@@ -4524,7 +4691,14 @@ function renderDiceHistory() {
     const item = document.createElement("li");
     item.className = "dice-history__item";
     const resolution = entry.resolution || {};
-    if (resolution.type === "push") {
+    const summaryData = formatHistorySummary(entry.summary);
+    if (summaryData) {
+      const outcomeClass =
+        summaryData.outcomeClass === "push"
+          ? "dice-history__item--push"
+          : `dice-history__item--${summaryData.outcomeClass}`;
+      item.classList.add(outcomeClass);
+    } else if (resolution.type === "push") {
       item.classList.add("dice-history__item--push");
     }
 
@@ -4550,6 +4724,8 @@ function renderDiceHistory() {
 
     header.append(roundSpan, rollSpan);
 
+    const summaryRow = buildHistorySummaryRow(summaryData, "dice-history");
+
     const cardsWrap = document.createElement("div");
     cardsWrap.className = "dice-history__cards";
 
@@ -4559,7 +4735,17 @@ function renderDiceHistory() {
       cardsWrap.appendChild(buildHistoryCard(card, isWinner));
     });
 
-    item.append(header, cardsWrap);
+    item.append(header);
+    if (summaryRow) {
+      item.appendChild(summaryRow);
+    }
+    item.appendChild(cardsWrap);
+
+    const winsBlock = buildHistoryWinsBlock(summaryData, "dice-history");
+    if (winsBlock) {
+      item.appendChild(winsBlock);
+    }
+
     diceHistoryList.appendChild(item);
   });
 }
@@ -4601,6 +4787,9 @@ function renderFullHistory() {
 
     header.append(roundSpan, resultSpan);
 
+    const summaryData = formatHistorySummary(entry.summary);
+    const summaryRow = buildHistorySummaryRow(summaryData, "history-full");
+
     const cardsWrap = document.createElement("div");
     cardsWrap.className = "history-full__cards";
     entry.cards.forEach((card, index) => {
@@ -4608,7 +4797,16 @@ function renderFullHistory() {
       cardsWrap.appendChild(cardEl);
     });
 
-    item.append(header, cardsWrap);
+    item.append(header);
+    if (summaryRow) {
+      item.appendChild(summaryRow);
+    }
+    item.appendChild(cardsWrap);
+
+    const winsBlock = buildHistoryWinsBlock(summaryData, "history-full");
+    if (winsBlock) {
+      item.appendChild(winsBlock);
+    }
     fragment.appendChild(item);
   });
 
@@ -4620,7 +4818,7 @@ function cloneCard(card) {
   return { rank: card.rank, suit: card.suit };
 }
 
-function addDiceHistoryEntry(cards, resolution) {
+function addDiceHistoryEntry(cards, resolution, summary) {
   historyCounter += 1;
   const normalizedResolution = {
     mode:
@@ -4639,6 +4837,26 @@ function addDiceHistoryEntry(cards, resolution) {
     id: historyCounter,
     cards: cards.map((card) => cloneCard(card)),
     resolution: normalizedResolution,
+    summary: summary
+      ? {
+          winningCard: summary.winningCard ? cloneCard(summary.winningCard) : null,
+          pokerHandKey: summary.pokerHandKey || null,
+          outcome: summary.outcome || null,
+          amount: roundCurrency(
+            Number.isFinite(summary.amount) ? summary.amount : 0,
+          ),
+          resolutionType: summary.resolutionType || null,
+          wins: Array.isArray(summary.wins)
+            ? summary.wins.map((win) => ({
+                betType: win.betType,
+                betKey: win.betKey,
+                payout: roundCurrency(
+                  Number.isFinite(win.payout) ? win.payout : 0,
+                ),
+              }))
+            : [],
+        }
+      : null,
   };
   diceHistoryEntries.unshift(entry);
   if (diceHistoryEntries.length > MAX_HISTORY_ITEMS) {
