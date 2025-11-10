@@ -1808,6 +1808,7 @@ body.settings-open {
   padding: clamp(0.85rem, 1.6vh, 1.1rem) clamp(1.8rem, 3vw, 2.4rem);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 22px rgba(255, 215, 0, 0.35);
   position: relative;
+  z-index: 300;
   overflow: hidden;
 }
 
