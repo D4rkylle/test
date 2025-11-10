@@ -1145,7 +1145,8 @@ body.settings-open {
   gap: clamp(1rem, 2.2vw, 1.65rem);
   padding: clamp(0.55rem, 1.1vh, 0.85rem)
     clamp(0.7rem, 1.5vw, 1.2rem)
-    clamp(0.8rem, 1.5vh, 1.1rem) clamp(0.4rem, 1.2vw, 0.9rem);
+    calc(clamp(0.8rem, 1.5vh, 1.1rem) + var(--winning-hints-offset))
+    clamp(0.4rem, 1.2vw, 0.9rem);
   box-sizing: border-box;
   height: auto;
   min-height: 0;
@@ -2291,19 +2292,6 @@ body.chip-style-neon .bet-chip::after {
   flex-direction: column;
   gap: clamp(0.8rem, 1.3vh, 1rem);
   min-height: 0;
-}
-
-.log-panel {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.log-panel h2 {
-  margin: 0 0 0.5rem;
-  color: var(--text-emphasis);
-  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
 }
 
 .win-banner {
@@ -3652,23 +3640,6 @@ body .card.card--spades {
 
 .dice-display--player-mode .dice-display__current {
   justify-content: center;
-}
-
-.log-panel ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: clamp(180px, 28vh, 260px);
-  overflow-y: auto;
-  flex: 1 1 auto;
-}
-
-.log-panel li {
-  margin-bottom: 0.4rem;
-  line-height: 1.35;
-  background: rgba(0, 0, 0, 0.35);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
 }
 
 @media (max-width: 1100px) {
