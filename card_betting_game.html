@@ -705,6 +705,100 @@
             Összes tét törlése
           </button>
         </div>
+        <section
+          class="staking-controls"
+          aria-labelledby="staking-title"
+          data-i18n-section="staking"
+        >
+          <div class="staking-controls__header">
+            <h2 id="staking-title" data-i18n="staking.title">Tétkezelés</h2>
+            <div class="staking-controls__mode" role="radiogroup">
+              <label class="staking-radio">
+                <input
+                  type="radio"
+                  name="staking-mode"
+                  value="manual"
+                  checked
+                />
+                <span data-i18n="staking.mode.manual">Kézi mód</span>
+              </label>
+              <label class="staking-radio">
+                <input type="radio" name="staking-mode" value="auto" />
+                <span data-i18n="staking.mode.auto">Automatikus mód</span>
+              </label>
+            </div>
+          </div>
+          <p id="staking-status" class="staking-controls__status" data-i18n="staking.status.manual">
+            Kézi tétkezelés aktív.
+          </p>
+          <div id="auto-stake-config" class="staking-controls__auto" hidden>
+            <div class="staking-field">
+              <label for="auto-loss-percent" data-i18n="staking.lossPercent.label">
+                Veszteség utáni módosítás (%)
+              </label>
+              <input
+                id="auto-loss-percent"
+                type="number"
+                step="1"
+                min="-100"
+                max="1000"
+                data-i18n-attr-placeholder="staking.lossPercent.placeholder"
+                placeholder="pl. 50"
+              />
+              <span class="staking-field__hint" data-i18n="staking.lossPercent.hint">
+                Pozitív érték növeli, negatív csökkenti a tétet.
+              </span>
+            </div>
+            <div class="staking-field">
+              <label for="auto-win-percent" data-i18n="staking.winPercent.label">
+                Nyereség utáni módosítás (%)
+              </label>
+              <input
+                id="auto-win-percent"
+                type="number"
+                step="1"
+                min="-100"
+                max="1000"
+                data-i18n-attr-placeholder="staking.winPercent.placeholder"
+                placeholder="pl. -25"
+              />
+              <span class="staking-field__hint" data-i18n="staking.winPercent.hint">
+                A nyerő kör utáni százalékos változás.
+              </span>
+            </div>
+            <div class="staking-field staking-field--split">
+              <div class="staking-field__column">
+                <label for="auto-stop-loss" data-i18n="staking.stopLoss.label">
+                  Stop-loss (CHF)
+                </label>
+                <input
+                  id="auto-stop-loss"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  data-i18n-attr-placeholder="staking.stop.placeholder"
+                  placeholder="0.00"
+                />
+              </div>
+              <div class="staking-field__column">
+                <label for="auto-stop-win" data-i18n="staking.stopWin.label">
+                  Stop-win (CHF)
+                </label>
+                <input
+                  id="auto-stop-win"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  data-i18n-attr-placeholder="staking.stop.placeholder"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <p class="staking-controls__note" data-i18n="staking.note">
+              Az automatikus mód a jelenlegi tételosztást használja alapnak.
+            </p>
+          </div>
+        </section>
         <div id="win-banner" class="win-banner" aria-live="assertive" hidden>
           <strong id="win-banner-title" data-i18n="banner.win.title">Ön nyert!</strong>
           <span id="win-banner-amount">+0 CHF</span>
