@@ -1796,23 +1796,30 @@ body.settings-open {
   overflow-y: auto;
 }
 
-.table-actions {
-  margin-top: clamp(0.75rem, 1.5vh, 1rem);
+.results-cards__header {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.8rem, 1.4vw, 1.25rem);
 }
 
-.table-actions .primary {
+.results-cards__actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.results-cards__actions .primary {
   min-width: clamp(200px, 18vw, 260px);
   font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   padding: clamp(0.85rem, 1.6vh, 1.1rem) clamp(1.8rem, 3vw, 2.4rem);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 22px rgba(255, 215, 0, 0.35);
   position: relative;
-  z-index: 300;
   overflow: hidden;
 }
 
-.table-actions .primary::after {
+.results-cards__actions .primary::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -1822,8 +1829,8 @@ body.settings-open {
   transition: opacity 0.3s ease;
 }
 
-.table-actions .primary:hover::after,
-.table-actions .primary:focus-visible::after {
+.results-cards__actions .primary:hover::after,
+.results-cards__actions .primary:focus-visible::after {
   opacity: 1;
 }
 
