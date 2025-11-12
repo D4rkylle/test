@@ -1172,7 +1172,7 @@ body.settings-open {
 
 .bankroll-panel {
   display: grid;
-  grid-template-rows: repeat(2, auto) auto auto;
+  grid-template-rows: repeat(2, auto) auto auto minmax(0, 1fr);
   gap: clamp(0.75rem, 1.4vh, 1rem);
   max-height: 100%;
   height: auto;
@@ -1337,6 +1337,7 @@ body.settings-open {
   display: flex;
   flex-direction: column;
   gap: clamp(0.7rem, 1.1vh, 0.95rem);
+  min-height: 0;
 }
 
 .staking-controls__header {
@@ -1414,6 +1415,30 @@ body.settings-open {
 .staking-controls__auto {
   padding: 0;
   background: transparent;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: clamp(0.2rem, 0.5vw, 0.35rem);
+  scrollbar-color: rgba(255, 255, 255, 0.35) rgba(255, 255, 255, 0.06);
+  scrollbar-gutter: stable;
+}
+
+.staking-controls__auto::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.staking-controls__auto::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+.staking-controls__auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+}
+
+.staking-controls__auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .autobet-panel {
