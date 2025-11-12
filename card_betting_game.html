@@ -732,71 +732,185 @@
             Kézi tétkezelés aktív.
           </p>
           <div id="auto-stake-config" class="staking-controls__auto" hidden>
-            <div class="staking-field">
-              <label for="auto-loss-percent" data-i18n="staking.lossPercent.label">
-                Veszteség utáni módosítás (%)
-              </label>
-              <input
-                id="auto-loss-percent"
-                type="number"
-                step="1"
-                min="-100"
-                max="1000"
-                data-i18n-attr-placeholder="staking.lossPercent.placeholder"
-                placeholder="pl. 50"
-              />
-              <span class="staking-field__hint" data-i18n="staking.lossPercent.hint">
-                Pozitív érték növeli, negatív csökkenti a tétet.
-              </span>
-            </div>
-            <div class="staking-field">
-              <label for="auto-win-percent" data-i18n="staking.winPercent.label">
-                Nyereség utáni módosítás (%)
-              </label>
-              <input
-                id="auto-win-percent"
-                type="number"
-                step="1"
-                min="-100"
-                max="1000"
-                data-i18n-attr-placeholder="staking.winPercent.placeholder"
-                placeholder="pl. -25"
-              />
-              <span class="staking-field__hint" data-i18n="staking.winPercent.hint">
-                A nyerő kör utáni százalékos változás.
-              </span>
-            </div>
-            <div class="staking-field staking-field--split">
-              <div class="staking-field__column">
-                <label for="auto-stop-loss" data-i18n="staking.stopLoss.label">
-                  Stop-loss (CHF)
-                </label>
-                <input
-                  id="auto-stop-loss"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  data-i18n-attr-placeholder="staking.stop.placeholder"
-                  placeholder="0.00"
-                />
+            <div class="autobet-panel">
+              <div class="autobet-row autobet-row--amount">
+                <div class="autobet-row__header">
+                  <label
+                    class="autobet-label"
+                    for="auto-base-amount"
+                    data-i18n="staking.baseAmount.label"
+                  >
+                    Alaptét (összesen)
+                  </label>
+                  <span class="autobet-hint" data-i18n="staking.baseAmount.hint">
+                    A kiinduló tétösszeg automatikus körökhöz.
+                  </span>
+                </div>
+                <div class="autobet-amount-control">
+                  <div class="autobet-input autobet-input--currency">
+                    <input
+                      id="auto-base-amount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      data-i18n-attr-placeholder="staking.baseAmount.placeholder"
+                    />
+                    <span class="autobet-unit">CHF</span>
+                  </div>
+                  <div
+                    class="autobet-amount-buttons"
+                    role="group"
+                    aria-label="Bet modifier"
+                    data-i18n-attr-aria-label="staking.baseAmount.adjustAria"
+                  >
+                    <button id="auto-base-half" type="button">½</button>
+                    <button id="auto-base-double" type="button">2×</button>
+                  </div>
+                </div>
               </div>
-              <div class="staking-field__column">
-                <label for="auto-stop-win" data-i18n="staking.stopWin.label">
-                  Stop-win (CHF)
-                </label>
-                <input
-                  id="auto-stop-win"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  data-i18n-attr-placeholder="staking.stop.placeholder"
-                  placeholder="0.00"
-                />
+
+              <div class="autobet-row">
+                <div class="autobet-row__header">
+                  <label
+                    class="autobet-label"
+                    for="auto-max-bets"
+                    data-i18n="staking.maxBets.label"
+                  >
+                    Körök száma
+                  </label>
+                  <span class="autobet-hint" data-i18n="staking.maxBets.hint">
+                    0 = végtelen automatikus kör
+                  </span>
+                </div>
+                <div class="autobet-input autobet-input--count">
+                  <input
+                    id="auto-max-bets"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    data-i18n-attr-placeholder="staking.maxBets.placeholder"
+                  />
+                </div>
               </div>
+
+              <div class="autobet-divider" role="presentation"></div>
+
+              <div class="autobet-row autobet-row--split">
+                <div class="autobet-sublabel" data-i18n="staking.onWin.label">
+                  Nyerés után
+                </div>
+                <div class="autobet-row__controls">
+                  <button
+                    type="button"
+                    id="auto-win-reset"
+                    class="autobet-reset"
+                    data-i18n="staking.reset"
+                  >
+                    Reset
+                  </button>
+                  <label class="autobet-inline">
+                    <span data-i18n="staking.onWin.increase">Tét növelése (%)</span>
+                    <input
+                      id="auto-win-percent"
+                      type="number"
+                      step="1"
+                      min="-100"
+                      max="1000"
+                      data-i18n-attr-placeholder="staking.winPercent.placeholder"
+                      placeholder="pl. -25"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div class="autobet-row autobet-row--split">
+                <div class="autobet-sublabel" data-i18n="staking.onLoss.label">
+                  Veszteség után
+                </div>
+                <div class="autobet-row__controls">
+                  <button
+                    type="button"
+                    id="auto-loss-reset"
+                    class="autobet-reset"
+                    data-i18n="staking.reset"
+                  >
+                    Reset
+                  </button>
+                  <label class="autobet-inline">
+                    <span data-i18n="staking.onLoss.increase">Tét módosítása (%)</span>
+                    <input
+                      id="auto-loss-percent"
+                      type="number"
+                      step="1"
+                      min="-100"
+                      max="1000"
+                      data-i18n-attr-placeholder="staking.lossPercent.placeholder"
+                      placeholder="pl. 50"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div class="autobet-divider" role="presentation"></div>
+
+              <div class="autobet-row autobet-row--compact">
+                <div class="autobet-row__header">
+                  <label
+                    class="autobet-label"
+                    for="auto-stop-win"
+                    data-i18n="staking.stopWin.label"
+                  >
+                    Stop-win (CHF)
+                  </label>
+                  <span class="autobet-hint" data-i18n="staking.stop.hint">
+                    0 = kikapcsolva
+                  </span>
+                </div>
+                <div class="autobet-input autobet-input--currency">
+                  <input
+                    id="auto-stop-win"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    data-i18n-attr-placeholder="staking.stop.placeholder"
+                  />
+                  <span class="autobet-unit">CHF</span>
+                </div>
+              </div>
+
+              <div class="autobet-row autobet-row--compact">
+                <div class="autobet-row__header">
+                  <label
+                    class="autobet-label"
+                    for="auto-stop-loss"
+                    data-i18n="staking.stopLoss.label"
+                  >
+                    Stop-loss (CHF)
+                  </label>
+                  <span class="autobet-hint" data-i18n="staking.stop.hint">
+                    0 = kikapcsolva
+                  </span>
+                </div>
+                <div class="autobet-input autobet-input--currency">
+                  <input
+                    id="auto-stop-loss"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    data-i18n-attr-placeholder="staking.stop.placeholder"
+                  />
+                  <span class="autobet-unit">CHF</span>
+                </div>
+              </div>
+
+              <p class="autobet-note" data-i18n="staking.note">
+                Az automatikus mód a jelenlegi tételosztást használja alapnak.
+              </p>
             </div>
-            <p class="staking-controls__note" data-i18n="staking.note">
-              Az automatikus mód a jelenlegi tételosztást használja alapnak.
-            </p>
           </div>
         </section>
         <div id="win-banner" class="win-banner" aria-live="assertive" hidden>
