@@ -810,6 +810,10 @@
                   >
                     Reset
                   </button>
+                  <label class="autobet-inline autobet-inline--toggle">
+                    <input type="checkbox" id="auto-win-reset-base" />
+                    <span data-i18n="staking.resetToBase">Alaptét visszaállítása</span>
+                  </label>
                   <label class="autobet-inline">
                     <span data-i18n="staking.onWin.increase">Tét növelése (%)</span>
                     <input
@@ -838,6 +842,10 @@
                   >
                     Reset
                   </button>
+                  <label class="autobet-inline autobet-inline--toggle">
+                    <input type="checkbox" id="auto-loss-reset-base" />
+                    <span data-i18n="staking.resetToBase">Alaptét visszaállítása</span>
+                  </label>
                   <label class="autobet-inline">
                     <span data-i18n="staking.onLoss.increase">Tét módosítása (%)</span>
                     <input
@@ -910,6 +918,16 @@
               <p class="autobet-note" data-i18n="staking.note">
                 Az automatikus mód a jelenlegi tételosztást használja alapnak.
               </p>
+              <div class="autobet-actions">
+                <button
+                  id="auto-stop"
+                  type="button"
+                  class="autobet-stop"
+                  data-i18n="staking.stopButton"
+                >
+                  Automatikus mód leállítása
+                </button>
+              </div>
             </div>
           </div>
         </section>

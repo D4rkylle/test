@@ -84,6 +84,8 @@ const DEFAULT_SETTINGS = {
   autoStopWin: 0,
   autoBaseAmount: 0,
   autoMaxBets: 0,
+  autoResetOnWin: false,
+  autoResetOnLoss: false,
 };
 
 const FELT_THEMES = ["emerald", "royal", "midnight"];
@@ -149,6 +151,7 @@ let cardSelectionResolver = null;
 let lastBetSnapshot = new Map();
 let lastBetTotal = 0;
 let autoResetTimeout = null;
+let autoStartTimer = null;
 
 const autoBetConfig = {
   lossPercent: 0,
@@ -157,6 +160,8 @@ const autoBetConfig = {
   stopWin: 0,
   baseAmount: 0,
   maxBets: 0,
+  resetOnWin: false,
+  resetOnLoss: false,
 };
 
 const autoBetRuntime = {
@@ -237,6 +242,8 @@ function persistSettings() {
       autoStopWin: autoBetConfig.stopWin,
       autoBaseAmount: autoBetConfig.baseAmount,
       autoMaxBets: autoBetConfig.maxBets,
+      autoResetOnWin: autoBetConfig.resetOnWin,
+      autoResetOnLoss: autoBetConfig.resetOnLoss,
     };
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload));
   } catch (error) {
@@ -534,6 +541,8 @@ const I18N_STRINGS = {
       "Automatikus mód: aktív tét {{amount}} összegben.",
     "staking.status.autoNext":
       "Automatikus mód: következő tét {{amount}} értékben készen áll.",
+    "staking.status.autoRunning":
+      "Automatikus mód fut: aktuális tét {{amount}} értékben.",
     "staking.status.autoStoppedLoss":
       "Stop-loss elérve, az automatikus mód szünetel.",
     "staking.status.autoStoppedWin":
@@ -542,6 +551,8 @@ const I18N_STRINGS = {
       "A megadott körszám teljesült, az automatikus mód szünetel.",
     "staking.status.autoStoppedBankroll":
       "Nincs elegendő egyenleg az automatikus tét folytatásához.",
+    "staking.status.autoStoppedManual":
+      "Az automatikus mód kézzel lett leállítva.",
     "staking.baseAmount.label": "Alaptét (összesen)",
     "staking.baseAmount.hint": "A kiinduló tétösszeg automatikus körökhöz.",
     "staking.baseAmount.placeholder": "0.00",
@@ -559,6 +570,8 @@ const I18N_STRINGS = {
     "staking.onLoss.label": "Veszteség után",
     "staking.onLoss.increase": "Tét módosítása (%)",
     "staking.reset": "Reset",
+    "staking.resetToBase": "Alaptét visszaállítása",
+    "staking.stopButton": "Automatikus mód leállítása",
     "staking.stopLoss.label": "Stop-loss (CHF)",
     "staking.stopWin.label": "Stop-win (CHF)",
     "staking.stop.placeholder": "0 = kikapcsolva",
@@ -697,6 +710,7 @@ const I18N_STRINGS = {
       "Az automatikus folytatáshoz {{amount}} lenne szükséges.",
     "messages.autoStopCount":
       "Elérted az automatikus körök limitjét ({{count}}).",
+    "messages.autoStoppedManual": "Az automatikus mód leállt a kézi parancs miatt.",
     "logs.rollSix": "Dobás: 6 – minden tét visszajár.",
     "logs.roll": "Dobás: {{value}}.",
     "logs.playerChoice": "Játékos a #{{position}} lapot választotta.",
@@ -901,6 +915,8 @@ const I18N_STRINGS = {
     "staking.status.autoApplied":
       "Automatic mode ready with active stake of {{amount}}.",
     "staking.status.autoNext": "Automatic mode queued: next stake {{amount}}.",
+    "staking.status.autoRunning":
+      "Automatic mode running: current stake {{amount}}.",
     "staking.status.autoStoppedLoss":
       "Stop-loss reached, automatic mode paused.",
     "staking.status.autoStoppedWin": "Stop-win reached, automatic mode paused.",
@@ -908,6 +924,7 @@ const I18N_STRINGS = {
       "Round limit reached, automatic mode paused.",
     "staking.status.autoStoppedBankroll":
       "Insufficient balance to continue automatic stakes.",
+    "staking.status.autoStoppedManual": "Automatic mode stopped manually.",
     "staking.baseAmount.label": "Bet amount (total)",
     "staking.baseAmount.hint": "Base wager total for automatic rounds.",
     "staking.baseAmount.placeholder": "0.00",
@@ -925,6 +942,8 @@ const I18N_STRINGS = {
     "staking.onLoss.label": "After a loss",
     "staking.onLoss.increase": "Adjust by (%)",
     "staking.reset": "Reset",
+    "staking.resetToBase": "Return to base bet",
+    "staking.stopButton": "Stop automatic mode",
     "staking.stopLoss.label": "Stop-loss (CHF)",
     "staking.stopWin.label": "Stop-win (CHF)",
     "staking.stop.placeholder": "0 = disabled",
@@ -1064,6 +1083,7 @@ const I18N_STRINGS = {
       "Automatic mode needs {{amount}} to continue.",
     "messages.autoStopCount":
       "Automatic mode stopped after {{count}} rounds.",
+    "messages.autoStoppedManual": "Automatic mode stopped manually.",
     "logs.rollSix": "Roll: 6 – all bets are returned.",
     "logs.roll": "Roll: {{value}}.",
     "logs.playerChoice": "Player picked card #{{position}}.",
@@ -1270,6 +1290,8 @@ const I18N_STRINGS = {
     "staking.status.autoApplied":
       "Automatikmodus bereit mit Einsatz über {{amount}}.",
     "staking.status.autoNext": "Automatikmodus wartet mit nächstem Einsatz {{amount}}.",
+    "staking.status.autoRunning":
+      "Automatikmodus läuft: aktueller Einsatz {{amount}}.",
     "staking.status.autoStoppedLoss":
       "Stop-Loss erreicht, Automatikmodus pausiert.",
     "staking.status.autoStoppedWin": "Stop-Win erreicht, Automatikmodus pausiert.",
@@ -1277,6 +1299,7 @@ const I18N_STRINGS = {
       "Rundenlimit erreicht, Automatikmodus pausiert.",
     "staking.status.autoStoppedBankroll":
       "Nicht genügend Guthaben für den Automatikmodus.",
+    "staking.status.autoStoppedManual": "Automatikmodus manuell angehalten.",
     "staking.baseAmount.label": "Einsatz (gesamt)",
     "staking.baseAmount.hint": "Ausgangseinsatz für automatische Runden.",
     "staking.baseAmount.placeholder": "0.00",
@@ -1294,6 +1317,8 @@ const I18N_STRINGS = {
     "staking.onLoss.label": "Nach Verlust",
     "staking.onLoss.increase": "Einsatz anpassen (%)",
     "staking.reset": "Zurücksetzen",
+    "staking.resetToBase": "Auf Grundeinsatz zurücksetzen",
+    "staking.stopButton": "Automatikmodus stoppen",
     "staking.stopLoss.label": "Stop-Loss (CHF)",
     "staking.stopWin.label": "Stop-Win (CHF)",
     "staking.stop.placeholder": "0 = deaktiviert",
@@ -1439,6 +1464,7 @@ const I18N_STRINGS = {
       "Für den Automatikmodus werden {{amount}} benötigt.",
     "messages.autoStopCount":
       "Automatikmodus nach {{count}} Runden beendet.",
+    "messages.autoStoppedManual": "Automatikmodus manuell gestoppt.",
     "logs.rollSix": "Wurf: 6 – alle Einsätze werden zurückgezahlt.",
     "logs.roll": "Wurf: {{value}}.",
     "logs.playerChoice": "Spieler wählte Karte #{{position}}.",
@@ -1539,6 +1565,8 @@ autoBetConfig.stopLoss = sanitizeAmountValue(settingsState.autoStopLoss);
 autoBetConfig.stopWin = sanitizeAmountValue(settingsState.autoStopWin);
 autoBetConfig.baseAmount = sanitizeAmountValue(settingsState.autoBaseAmount);
 autoBetConfig.maxBets = sanitizeCountValue(settingsState.autoMaxBets);
+autoBetConfig.resetOnWin = Boolean(settingsState.autoResetOnWin);
+autoBetConfig.resetOnLoss = Boolean(settingsState.autoResetOnLoss);
 autoBetRuntime.betsTarget = autoBetConfig.maxBets || 0;
 
 let winningHintsEnabled =
@@ -1746,6 +1774,9 @@ const autoBaseDoubleButton = document.getElementById("auto-base-double");
 const autoMaxBetsInput = document.getElementById("auto-max-bets");
 const autoWinResetButton = document.getElementById("auto-win-reset");
 const autoLossResetButton = document.getElementById("auto-loss-reset");
+const autoWinResetBaseToggle = document.getElementById("auto-win-reset-base");
+const autoLossResetBaseToggle = document.getElementById("auto-loss-reset-base");
+const autoStopButton = document.getElementById("auto-stop");
 const settingsPanel = document.getElementById("settings-panel");
 const settingsToggle = document.getElementById("settings-toggle");
 const settingsDialog = settingsPanel
@@ -2624,6 +2655,33 @@ if (autoLossResetButton) {
   });
 }
 
+if (autoWinResetBaseToggle) {
+  autoWinResetBaseToggle.addEventListener("change", (event) => {
+    autoBetConfig.resetOnWin = Boolean(event.target.checked);
+    applyAutoConfigToInputs();
+    persistAutoConfig();
+    resetAutoSession({ keepPending: true, keepStructure: true });
+  });
+}
+
+if (autoLossResetBaseToggle) {
+  autoLossResetBaseToggle.addEventListener("change", (event) => {
+    autoBetConfig.resetOnLoss = Boolean(event.target.checked);
+    applyAutoConfigToInputs();
+    persistAutoConfig();
+    resetAutoSession({ keepPending: true, keepStructure: true });
+  });
+}
+
+if (autoStopButton) {
+  autoStopButton.addEventListener("click", () => {
+    if (currentStakingMode === STAKING_MODES.AUTO) {
+      stopAutoMode("manual");
+      addLog("messages.autoStoppedManual");
+    }
+  });
+}
+
 function currentAvailable() {
   return roundCurrency(bankroll - currentBetTotal);
 }
@@ -2706,6 +2764,8 @@ function doubleExistingBets() {
 }
 
 function resetAutoSession({ keepPending = false, keepStructure = false } = {}) {
+  clearAutoResetTimer();
+  clearAutoStartTimer();
   autoBetRuntime.sessionProfit = 0;
   autoBetRuntime.nextTotal = 0;
   autoBetRuntime.active = false;
@@ -2826,6 +2886,8 @@ function persistAutoConfig() {
     autoStopWin: autoBetConfig.stopWin,
     autoBaseAmount: autoBetConfig.baseAmount,
     autoMaxBets: autoBetConfig.maxBets,
+    autoResetOnWin: autoBetConfig.resetOnWin,
+    autoResetOnLoss: autoBetConfig.resetOnLoss,
   });
 }
 
@@ -2877,6 +2939,18 @@ function applyAutoConfigToInputs() {
   if (autoMaxBetsInput) {
     autoMaxBetsInput.value = autoBetConfig.maxBets ? String(autoBetConfig.maxBets) : "0";
   }
+  if (autoWinResetBaseToggle) {
+    autoWinResetBaseToggle.checked = Boolean(autoBetConfig.resetOnWin);
+  }
+  if (autoLossResetBaseToggle) {
+    autoLossResetBaseToggle.checked = Boolean(autoBetConfig.resetOnLoss);
+  }
+  if (autoWinInput) {
+    autoWinInput.disabled = Boolean(autoBetConfig.resetOnWin);
+  }
+  if (autoLossInput) {
+    autoLossInput.disabled = Boolean(autoBetConfig.resetOnLoss);
+  }
   suppressAutoInputSync = false;
 }
 
@@ -2894,9 +2968,17 @@ function updateStakingStatus() {
       key = "staking.status.autoStoppedCount";
     } else if (autoBetRuntime.stopReason === "bankroll") {
       key = "staking.status.autoStoppedBankroll";
+    } else if (autoBetRuntime.stopReason === "manual") {
+      key = "staking.status.autoStoppedManual";
     } else {
       let amountText = null;
-      if (autoBetRuntime.pendingBets && autoBetRuntime.nextTotal > 0) {
+      if (roundLocked) {
+        const runningAmount = currentBetTotal > 0 ? currentBetTotal : autoBetRuntime.nextTotal;
+        if (runningAmount > 0) {
+          amountText = formatCurrency(runningAmount);
+        }
+        key = "staking.status.autoRunning";
+      } else if (autoBetRuntime.pendingBets && autoBetRuntime.nextTotal > 0) {
         amountText = formatCurrency(autoBetRuntime.nextTotal);
         key = "staking.status.autoNext";
       } else if (!roundLocked && currentBetTotal > 0) {
@@ -2912,6 +2994,11 @@ function updateStakingStatus() {
   }
 
   stakingStatusEl.textContent = t(key, params);
+}
+
+function updateAutoStopButtonAvailability() {
+  if (!autoStopButton) return;
+  autoStopButton.disabled = currentStakingMode !== STAKING_MODES.AUTO;
 }
 
 function setStakingMode(mode) {
@@ -2935,6 +3022,7 @@ function setStakingMode(mode) {
     initializeAutoBaseFromCurrent();
   }
   updateStakingStatus();
+  updateAutoStopButtonAvailability();
 }
 
 function handleAutoInputChange(event) {
@@ -2994,9 +3082,14 @@ function applyAutoPendingBets() {
   updateBetToolAvailability();
   updateWinningCardHints();
   updateStakingStatus();
+  if (!roundLocked) {
+    scheduleAutoRoundStart(80);
+  }
 }
 
 function stopAutoMode(reasonKey) {
+  clearAutoResetTimer();
+  clearAutoStartTimer();
   autoBetRuntime.pendingBets = null;
   autoBetRuntime.nextTotal = 0;
   autoBetRuntime.active = false;
@@ -3013,16 +3106,19 @@ function handleAutoBetAfterRound({ betEntries, netGain, resolutionType }) {
     stopAutoMode(null);
     return;
   }
+  if (autoBetRuntime.stopReason === "manual") {
+    return;
+  }
   const roundTotal = roundCurrency(
     betEntries.reduce((sum, [, amount]) => sum + amount, 0),
   );
+  captureAutoDistribution(betEntries);
 
   if (resolutionType === "push") {
     autoBetRuntime.active = true;
     autoBetRuntime.stopReason = null;
     autoBetRuntime.pendingBets = new Map(betEntries);
     autoBetRuntime.nextTotal = roundTotal;
-    captureAutoDistribution(betEntries);
     applyAutoBaseAmount(roundTotal, { updatePending: false });
     persistAutoConfig();
     autoBetRuntime.betsExecuted += 1;
@@ -3049,6 +3145,35 @@ function handleAutoBetAfterRound({ betEntries, netGain, resolutionType }) {
 
   const lossLimit = autoBetConfig.stopLoss;
   const winLimit = autoBetConfig.stopWin;
+
+  const shouldResetToBase =
+    (netGain > 0 && autoBetConfig.resetOnWin) ||
+    (netGain < 0 && autoBetConfig.resetOnLoss);
+
+  if (shouldResetToBase) {
+    const baseline =
+      autoBetConfig.baseAmount > 0
+        ? autoBetConfig.baseAmount
+        : roundTotal > 0
+        ? roundTotal
+        : autoBetRuntime.nextTotal || 0;
+    const rebuildTotal = rebuildAutoPendingFromBase(baseline);
+    if (rebuildTotal <= 0) {
+      stopAutoMode("bankroll");
+      addLog("messages.autoZeroBet");
+      return;
+    }
+    if (rebuildTotal > bankroll) {
+      stopAutoMode("bankroll");
+      addLog("messages.autoInsufficient", { amount: formatCurrency(rebuildTotal) });
+      return;
+    }
+    autoBetRuntime.active = true;
+    autoBetRuntime.stopReason = null;
+    persistAutoConfig();
+    updateStakingStatus();
+    return;
+  }
 
   if (lossLimit > 0 && autoBetRuntime.sessionProfit <= -lossLimit) {
     stopAutoMode("loss");
@@ -3123,9 +3248,41 @@ function clearAutoResetTimer() {
   }
 }
 
+function clearAutoStartTimer() {
+  if (autoStartTimer) {
+    window.clearTimeout(autoStartTimer);
+    autoStartTimer = null;
+  }
+}
+
+function shouldAutoStartRound() {
+  if (currentStakingMode !== STAKING_MODES.AUTO) return false;
+  if (autoBetRuntime.stopReason) return false;
+  if (roundLocked) return false;
+  if (!autoBetRuntime.active) return false;
+  if (currentBetTotal <= 0) return false;
+  return true;
+}
+
+function scheduleAutoRoundStart(delay = 120) {
+  if (!shouldAutoStartRound()) {
+    return;
+  }
+  clearAutoStartTimer();
+  autoStartTimer = window.setTimeout(() => {
+    autoStartTimer = null;
+    if (shouldAutoStartRound()) {
+      startRound();
+    }
+  }, Math.max(0, delay));
+}
+
 function scheduleAutoPrepareNextRound() {
   clearAutoResetTimer();
-  const delay = currentRevealSpeed === "tense" ? 3800 : 2400;
+  const isAutoFast =
+    currentStakingMode === STAKING_MODES.AUTO &&
+    (autoBetRuntime.pendingBets || autoBetRuntime.active);
+  const delay = isAutoFast ? 200 : currentRevealSpeed === "tense" ? 3800 : 2400;
   autoResetTimeout = window.setTimeout(() => {
     autoResetTimeout = null;
     if (roundComplete && roundLocked) {
@@ -4479,6 +4636,7 @@ window.addEventListener("resize", () => {
 
 function prepareNextRound() {
   clearAutoResetTimer();
+  clearAutoStartTimer();
   hideWinPopup(true);
   resetResultsSummaryState();
   roundLocked = false;
@@ -4498,8 +4656,12 @@ function prepareNextRound() {
 async function startRound() {
   hideWinPopup(true);
   clearAutoResetTimer();
+  clearAutoStartTimer();
   roundLocked = true;
   roundComplete = false;
+  if (currentStakingMode === STAKING_MODES.AUTO && autoBetRuntime.stopReason === "manual") {
+    autoBetRuntime.stopReason = null;
+  }
   if (dealButton) {
     dealButton.disabled = true;
   }
@@ -4507,13 +4669,21 @@ async function startRound() {
   setBetBreakdownPlaceholder("round.inProgress");
   setResultsSummaryPending();
   updateBetToolAvailability();
+  updateStakingStatus();
   const previousWinningCard = lastWinningCard;
   const deck = buildDeck();
   shuffleDeck(deck);
   const cards = dealCards(deck, 5);
-  const isPlayerMode = currentDiceMode === DICE_MODES.PLAYER;
-  const shouldAutoReveal = !isPlayerMode && currentRevealSpeed !== "tense";
-  displayCards(cards, { autoReveal: shouldAutoReveal, selectable: isPlayerMode });
+  const isAutoMode = currentStakingMode === STAKING_MODES.AUTO;
+  const diceModeForRound =
+    isAutoMode && currentDiceMode === DICE_MODES.PLAYER
+      ? DICE_MODES.RANDOM
+      : currentDiceMode;
+  const isPlayerMode = diceModeForRound === DICE_MODES.PLAYER;
+  const allowSelection = isPlayerMode && !isAutoMode;
+  const shouldAutoReveal =
+    !allowSelection && (currentRevealSpeed !== "tense" || isAutoMode);
+  displayCards(cards, { autoReveal: shouldAutoReveal, selectable: allowSelection });
   const revealPendingCards = (winningIdx, options = {}) => {
     if (shouldAutoReveal) return;
     const pending = cardElements.some((cardEl) =>
@@ -4626,10 +4796,18 @@ async function startRound() {
       }
     });
   } else {
-    const dieResult = rollDie();
+    const fastAuto = isAutoMode;
+    const dieResult = fastAuto ? Math.floor(Math.random() * 5) + 1 : rollDie();
     resolution.value = dieResult;
-    const diceAnimation = displayDie(dieResult);
-    await diceAnimation;
+    if (fastAuto) {
+      playSound("dice");
+      setDiceTransform(DICE_TRANSFORMS[dieResult] ?? DICE_TRANSFORMS[1], { animate: false });
+      setDiceText("dice.result", { value: dieResult });
+    }
+    if (!fastAuto) {
+      const diceAnimation = displayDie(dieResult);
+      await diceAnimation;
+    }
 
     if (dieResult === 6) {
       resolution.type = "push";
@@ -4934,6 +5112,9 @@ function revealCardsForResolution(winningIndex, options = {}) {
 }
 
 function waitForWinningCardReveal(index) {
+  if (currentStakingMode === STAKING_MODES.AUTO) {
+    return Promise.resolve();
+  }
   if (typeof index !== "number" || index < 0 || index >= cardElements.length) {
     return Promise.resolve();
   }
